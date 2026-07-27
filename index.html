@@ -22,7 +22,7 @@
     color:var(--text);min-height:100vh;padding:20px 16px 60px;line-height:1.5;
   }
   .wrap{max-width:720px;margin:0 auto}
-  header{display:flex;align-items:center;gap:12px;margin:8px 2px 22px}
+  header{display:flex;align-items:center;gap:12px;margin:8px 2px 18px}
   .dot{width:22px;height:22px;border-radius:50%;background:var(--buzz);
     box-shadow:0 0 0 4px rgba(198,241,53,.18),0 0 22px rgba(198,241,53,.55);
     animation:pulse 2.4s ease-in-out infinite;flex:0 0 auto}
@@ -42,6 +42,14 @@
   select{flex:1;min-width:120px;padding:10px 12px;font-size:14px;background:var(--surface);
     border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none;font-family:inherit}
   select:focus{border-color:var(--buzz)}
+  /* 제보 / 오류신고 버튼 */
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .actions a{flex:1;min-width:130px;text-align:center;text-decoration:none;
+    padding:11px 12px;font-size:14px;font-weight:700;border-radius:10px;
+    border:1.5px solid var(--line);color:var(--text);background:var(--surface);
+    transition:border-color .15s, color .15s}
+  .actions a:hover{border-color:var(--buzz);color:var(--buzz)}
+  .actions a.report:hover{border-color:var(--hot);color:var(--hot)}
   .meta{font-size:13px;color:var(--muted);margin:14px 2px 10px}
   .meta b{color:var(--buzz)}
   .list{display:flex;flex-direction:column;gap:10px}
@@ -56,6 +64,8 @@
   .a::before{content:"정답";font-size:11px;font-weight:700;color:var(--hot);letter-spacing:.04em;
     flex:0 0 auto;transform:translateY(-1px)}
   mark{background:rgba(255,77,151,.25);color:var(--text);border-radius:3px;padding:0 2px}
+  .by{margin-top:8px;text-align:right;font-size:11px;color:var(--muted)}
+  .by b{color:var(--muted);font-weight:600}
   .empty{text-align:center;color:var(--muted);padding:48px 16px;font-size:14px}
   .empty b{color:var(--text);display:block;margin-bottom:6px;font-size:15px}
   .banner{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);
@@ -97,6 +107,9 @@
     </select>
   </div>
 
+  <!-- 제보 / 오류신고 버튼: 아래 URL을 넣으면 자동으로 나타나요 -->
+  <div class="actions" id="actions"></div>
+
   <div class="meta" id="meta"></div>
   <div class="list" id="list"></div>
 
@@ -105,35 +118,39 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════
-   ① 여기에 구글시트 "웹에 게시(CSV)" 주소를 붙여넣으세요.
-      비워두면 아래 샘플 데이터로 동작합니다.
-   예: "https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv"
+   ① 문제 데이터를 읽어올 구글시트 CSV 주소 (이미 넣어뒀어요)
    ══════════════════════════════════════════════════════════ */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Eh0qizgj9xTEyFtEPWvhIlioj-Vd4MYtpCVSiAALBu-KaG2NVj68qWFhbOJ4SO6vXch4pSlRSGq8/pub?output=csv";
 
-/* 시트 컬럼 순서: 게임 / 문제 / 정답  (첫 줄은 제목 행) */
-const SAMPLE = [
-  { cat:"올라올라", q:"세계에서 가장 높은 산은?", a:"에베레스트" },
-  { cat:"올라올라", q:"태양계에서 가장 큰 행성은?", a:"목성" },
-  { cat:"꽁꽁",     q:"대한민국의 수도는?", a:"서울" },
-  { cat:"OX,XO",   q:"펭귄은 날 수 있다", a:"X (없다)" },
-  { cat:"가로세로", q:"훈민정음을 만든 왕은?", a:"세종대왕" },
-];
+/* ══════════════════════════════════════════════════════════
+   ② 유저 제보 / 오류신고용 구글 설문지 주소를 넣으세요.
+      설문지 화면 오른쪽 위 "보내기" → 링크(🔗) 아이콘에서
+      나오는 주소를 그대로 붙여넣으면 돼요.
+      비워두면 해당 버튼은 안 나와요.
+   ══════════════════════════════════════════════════════════ */
+const SUBMIT_FORM_URL = "";   // 문제 제보하기
+const REPORT_FORM_URL = "";   // 문제 오류 신고
 
 const $ = s => document.querySelector(s);
 const norm = s => s.toLowerCase().replace(/\s+/g,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 let DATA = [];
 
-/* ── CSV 파서 (따옴표·쉼표·줄바꿈 처리) ── */
+/* ── 제보/신고 버튼 만들기 ── */
+(function buildActions(){
+  let html="";
+  if(SUBMIT_FORM_URL) html+=`<a href="${SUBMIT_FORM_URL}" target="_blank" rel="noopener">➕ 문제 제보하기</a>`;
+  if(REPORT_FORM_URL) html+=`<a class="report" href="${REPORT_FORM_URL}" target="_blank" rel="noopener">⚠️ 오류 신고</a>`;
+  $("#actions").innerHTML=html;
+})();
+
+/* ── CSV 파서 ── */
 function parseCSV(text){
   const rows=[]; let row=[], cur="", q=false;
   for(let i=0;i<text.length;i++){
     const c=text[i];
-    if(q){
-      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
-      else cur+=c;
-    }else{
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else{
       if(c==='"') q=true;
       else if(c===',') { row.push(cur); cur=""; }
       else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
@@ -143,11 +160,10 @@ function parseCSV(text){
   if(cur!==""||row.length){ row.push(cur); rows.push(row); }
   return rows;
 }
-
 function rowsToData(rows){
-  return rows.slice(1) // 첫 줄(제목) 제외
+  return rows.slice(1)
     .filter(r=>r.length>=3 && (r[1]||"").trim())
-    .map(r=>({ cat:(r[0]||"기타").trim(), q:(r[1]||"").trim(), a:(r[2]||"").trim() }));
+    .map(r=>({ cat:(r[0]||"기타").trim(), q:(r[1]||"").trim(), a:(r[2]||"").trim(), by:(r[3]||"").trim() }));
 }
 
 /* ── 검색 ── */
@@ -186,17 +202,16 @@ function render(){
   $("#list").innerHTML=rows.map(d=>`
     <div class="card"><span class="cat">${d.cat}</span>
       <div class="q">${highlight(d.q,query)}</div>
-      <div class="a">${highlight(d.a,query)}</div></div>`).join("");
+      <div class="a">${highlight(d.a,query)}</div>
+      ${d.by?`<div class="by">제보: <b>${d.by}</b></div>`:""}</div>`).join("");
 }
 
 /* ── 데이터 로드 ── */
 async function load(){
   const banner=$("#banner");
   if(!SHEET_CSV_URL){
-    DATA=SAMPLE;
-    banner.className="banner";
-    banner.innerHTML=`<b>지금은 샘플 데이터로 동작 중이에요.</b><br>
-      구글시트를 웹에 게시(CSV)한 뒤, 코드 위쪽 <code>SHEET_CSV_URL</code> 에 그 주소를 넣으면 실제 족보가 연결돼요.`;
+    DATA=[]; banner.className="banner";
+    banner.innerHTML=`<b>시트 주소가 비어 있어요.</b><br>코드 위쪽 <code>SHEET_CSV_URL</code> 에 CSV 주소를 넣어주세요.`;
     buildCats(); render(); return;
   }
   banner.className="banner";
@@ -209,9 +224,9 @@ async function load(){
     banner.className=""; banner.innerHTML="";
     buildCats(); render();
   }catch(e){
-    DATA=SAMPLE; buildCats(); render();
+    DATA=[]; buildCats(); render();
     banner.className="banner";
-    banner.innerHTML=`<b>시트를 불러오지 못했어요. 샘플로 표시 중이에요.</b><br>
+    banner.innerHTML=`<b>시트를 불러오지 못했어요.</b><br>
       시트가 <b>웹에 게시(CSV)</b> 되어 있는지, 주소가 정확한지 확인해주세요. (오류: ${e.message})`;
   }
 }
