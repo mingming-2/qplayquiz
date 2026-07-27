@@ -188,14 +188,21 @@ function buildCats(){
 function render(){
   const query=$("#q").value.trim(), cat=$("#cat").value,
         limit=+$("#limit").value, sort=$("#sort").value;
+
+  // 검색어가 없으면 결과를 보여주지 않고 안내만 표시
+  if(!query){
+    $("#meta").innerHTML="";
+    $("#list").innerHTML=`<div class="empty"><b>문제를 검색해보세요</b>위 칸에 문제 일부만 입력하면 정답이 나와요.</div>`;
+    return;
+  }
+
   let rows=DATA.filter(d=>!cat||d.cat===cat);
-  rows = query ? rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>15)
-               : rows.map(d=>({...d,s:0}));
-  if(sort==="rel"&&query) rows.sort((a,b)=>b.s-a.s);
-  else if(sort==="desc")  rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
-  else                    rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
+  rows = rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>15);
+  if(sort==="rel")       rows.sort((a,b)=>b.s-a.s);
+  else if(sort==="desc") rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
+  else                   rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
   const total=rows.length; rows=rows.slice(0,limit);
-  $("#meta").innerHTML = query?`“${query}” 검색결과 <b>${total}</b>건`:`전체 <b>${total}</b>건`;
+  $("#meta").innerHTML=`“${query}” 검색결과 <b>${total}</b>건`;
   if(!rows.length){
     $("#list").innerHTML=`<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;return;
   }
