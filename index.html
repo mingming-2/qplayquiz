@@ -8,15 +8,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root{
-    --ink:#0E1020;
-    --surface:#181B34;
-    --surface-2:#20244a;
-    --line:#2c3160;
-    --text:#EDEEF7;
-    --muted:#8A90BC;
-    --buzz:#C6F135;      /* buzzer light */
-    --hot:#FF4D97;       /* match highlight */
-    --radius:14px;
+    --ink:#0E1020; --surface:#181B34; --surface-2:#20244a; --line:#2c3160;
+    --text:#EDEEF7; --muted:#8A90BC; --buzz:#C6F135; --hot:#FF4D97; --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
@@ -26,80 +19,53 @@
       radial-gradient(900px 500px at 15% -10%, #1b2050 0%, transparent 60%),
       radial-gradient(700px 500px at 110% 10%, #2a1440 0%, transparent 55%),
       var(--ink);
-    color:var(--text);
-    min-height:100vh;
-    padding:20px 16px 60px;
-    line-height:1.5;
+    color:var(--text);min-height:100vh;padding:20px 16px 60px;line-height:1.5;
   }
   .wrap{max-width:720px;margin:0 auto}
-
-  /* header */
   header{display:flex;align-items:center;gap:12px;margin:8px 2px 22px}
-  .dot{
-    width:22px;height:22px;border-radius:50%;background:var(--buzz);
+  .dot{width:22px;height:22px;border-radius:50%;background:var(--buzz);
     box-shadow:0 0 0 4px rgba(198,241,53,.18),0 0 22px rgba(198,241,53,.55);
-    animation:pulse 2.4s ease-in-out infinite;flex:0 0 auto
-  }
+    animation:pulse 2.4s ease-in-out infinite;flex:0 0 auto}
   @keyframes pulse{50%{box-shadow:0 0 0 8px rgba(198,241,53,.08),0 0 26px rgba(198,241,53,.7)}}
   h1{font-size:20px;font-weight:800;letter-spacing:-.02em}
   h1 span{color:var(--muted);font-weight:600;font-size:13px;display:block;letter-spacing:0}
-
-  /* search box */
   .search{position:relative;margin-bottom:12px}
-  .search input{
-    width:100%;padding:16px 46px 16px 18px;font-size:16px;
-    background:var(--surface);border:1.5px solid var(--line);
-    border-radius:var(--radius);color:var(--text);outline:none;
-    transition:border-color .15s, box-shadow .15s;
-  }
+  .search input{width:100%;padding:16px 46px 16px 18px;font-size:16px;background:var(--surface);
+    border:1.5px solid var(--line);border-radius:var(--radius);color:var(--text);outline:none;
+    transition:border-color .15s, box-shadow .15s}
   .search input:focus{border-color:var(--buzz);box-shadow:0 0 0 4px rgba(198,241,53,.14)}
   .search input::placeholder{color:var(--muted)}
-  .clear{
-    position:absolute;right:8px;top:50%;transform:translateY(-50%);
-    border:0;background:var(--surface-2);color:var(--muted);
-    width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px
-  }
+  .clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:var(--surface-2);
+    color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px}
   .clear:hover{color:var(--text)}
-
-  /* controls */
   .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-  select{
-    flex:1;min-width:120px;padding:10px 12px;font-size:14px;
-    background:var(--surface);border:1.5px solid var(--line);
-    border-radius:10px;color:var(--text);outline:none;font-family:inherit
-  }
+  select{flex:1;min-width:120px;padding:10px 12px;font-size:14px;background:var(--surface);
+    border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none;font-family:inherit}
   select:focus{border-color:var(--buzz)}
-
   .meta{font-size:13px;color:var(--muted);margin:14px 2px 10px}
   .meta b{color:var(--buzz)}
-
-  /* cards */
   .list{display:flex;flex-direction:column;gap:10px}
-  .card{
-    background:var(--surface);border:1px solid var(--line);
-    border-radius:var(--radius);padding:16px 16px 14px;
-    animation:rise .25s ease both
-  }
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 16px 14px;animation:rise .25s ease both}
   @keyframes rise{from{opacity:0;transform:translateY(6px)}}
-  .cat{
-    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;
-    color:var(--ink);background:var(--buzz);padding:3px 9px;border-radius:999px;margin-bottom:9px
-  }
+  .cat{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink);
+    background:var(--buzz);padding:3px 9px;border-radius:999px;margin-bottom:9px}
   .q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
-  .a{
-    display:flex;align-items:baseline;gap:8px;
-    font-size:17px;font-weight:800;color:var(--buzz);
-    border-top:1px dashed var(--line);padding-top:10px
-  }
-  .a::before{content:"정답";font-size:11px;font-weight:700;color:var(--hot);
-    letter-spacing:.04em;flex:0 0 auto;transform:translateY(-1px)}
+  .a{display:flex;align-items:baseline;gap:8px;font-size:17px;font-weight:800;color:var(--buzz);
+    border-top:1px dashed var(--line);padding-top:10px}
+  .a::before{content:"정답";font-size:11px;font-weight:700;color:var(--hot);letter-spacing:.04em;
+    flex:0 0 auto;transform:translateY(-1px)}
   mark{background:rgba(255,77,151,.25);color:var(--text);border-radius:3px;padding:0 2px}
-
   .empty{text-align:center;color:var(--muted);padding:48px 16px;font-size:14px}
   .empty b{color:var(--text);display:block;margin-bottom:6px;font-size:15px}
-
+  .banner{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+  .banner b{color:var(--buzz)}
+  .banner code{background:var(--ink);padding:2px 6px;border-radius:6px;color:var(--text);font-size:12px;word-break:break-all}
   footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;line-height:1.7}
-  code{background:var(--surface-2);padding:2px 6px;border-radius:6px;color:var(--buzz);font-size:12px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--buzz);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -109,8 +75,10 @@
     <h1>퀴즈 웹족보<span>문제를 입력하면 정답을 찾아드려요</span></h1>
   </header>
 
+  <div id="banner"></div>
+
   <div class="search">
-    <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off" autofocus>
+    <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off">
     <button class="clear" id="clear" title="지우기">✕</button>
   </div>
 
@@ -132,100 +100,128 @@
   <div class="meta" id="meta"></div>
   <div class="list" id="list"></div>
 
-  <footer>
-    이건 데모용 샘플 데이터예요. 아래 <code>DATA</code> 배열에<br>
-    실제 문제·정답을 넣으면 바로 검색됩니다.
-  </footer>
+  <footer>구글시트를 수정하면 새로고침 시 자동 반영돼요.</footer>
 </div>
 
 <script>
-/* ─────────────────────────────────────────────
-   여기에 문제/정답을 넣으세요.
-   { cat: 게임이름, q: 문제, a: 정답 }
-   ───────────────────────────────────────────── */
-const DATA = [
+/* ══════════════════════════════════════════════════════════
+   ① 여기에 구글시트 "웹에 게시(CSV)" 주소를 붙여넣으세요.
+      비워두면 아래 샘플 데이터로 동작합니다.
+   예: "https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv"
+   ══════════════════════════════════════════════════════════ */
+const SHEET_CSV_URL = "";
+
+/* 시트 컬럼 순서: 게임 / 문제 / 정답  (첫 줄은 제목 행) */
+const SAMPLE = [
   { cat:"올라올라", q:"세계에서 가장 높은 산은?", a:"에베레스트" },
   { cat:"올라올라", q:"태양계에서 가장 큰 행성은?", a:"목성" },
-  { cat:"올라올라", q:"물의 화학식은?", a:"H2O" },
   { cat:"꽁꽁",     q:"대한민국의 수도는?", a:"서울" },
-  { cat:"꽁꽁",     q:"일년은 며칠인가?", a:"365일" },
-  { cat:"꽁꽁",     q:"무지개는 몇 가지 색인가?", a:"7가지" },
   { cat:"OX,XO",   q:"펭귄은 날 수 있다", a:"X (없다)" },
-  { cat:"OX,XO",   q:"박쥐는 포유류다", a:"O (맞다)" },
-  { cat:"가로세로", q:"이순신 장군이 사용한 거북 모양 배는?", a:"거북선" },
   { cat:"가로세로", q:"훈민정음을 만든 왕은?", a:"세종대왕" },
-  { cat:"테스트",   q:"이것은 테스트 문제입니다", a:"테스트 정답" },
 ];
 
-/* ── 검색 로직 ── */
 const $ = s => document.querySelector(s);
 const norm = s => s.toLowerCase().replace(/\s+/g,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+let DATA = [];
 
-// 카테고리 셀렉트 채우기
-[...new Set(DATA.map(d=>d.cat))].forEach(c=>{
-  const o=document.createElement("option");o.value=c;o.textContent=c;$("#cat").appendChild(o);
-});
+/* ── CSV 파서 (따옴표·쉼표·줄바꿈 처리) ── */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===',') { row.push(cur); cur=""; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c!=='\r') cur+=c;
+    }
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
 
-function score(query, item){
-  const q = norm(query), qt = norm(item.q), at = norm(item.a);
+function rowsToData(rows){
+  return rows.slice(1) // 첫 줄(제목) 제외
+    .filter(r=>r.length>=3 && (r[1]||"").trim())
+    .map(r=>({ cat:(r[0]||"기타").trim(), q:(r[1]||"").trim(), a:(r[2]||"").trim() }));
+}
+
+/* ── 검색 ── */
+function score(query,item){
+  const q=norm(query),qt=norm(item.q),at=norm(item.a);
   if(!q) return 0;
-  if(qt.includes(q) || at.includes(q)) return 100 - qt.indexOf(q);
-  // 토큰(글자) 겹침 점수
+  if(qt.includes(q)||at.includes(q)) return 100-qt.indexOf(q);
   let hit=0; for(const ch of new Set(q)) if(qt.includes(ch)) hit++;
   return (hit/new Set(q).size)*40;
 }
-
-function highlight(text, query){
-  const q = query.trim(); if(!q) return text;
+function highlight(text,query){
+  const q=query.trim(); if(!q) return text;
   try{ return text.replace(new RegExp("("+esc(q)+")","gi"),"<mark>$1</mark>"); }
   catch(e){ return text; }
 }
-
+function buildCats(){
+  $("#cat").innerHTML='<option value="">전체 게임</option>';
+  [...new Set(DATA.map(d=>d.cat))].forEach(c=>{
+    const o=document.createElement("option");o.value=c;o.textContent=c;$("#cat").appendChild(o);
+  });
+}
 function render(){
-  const query = $("#q").value.trim();
-  const cat   = $("#cat").value;
-  const limit = +$("#limit").value;
-  const sort  = $("#sort").value;
-
-  let rows = DATA.filter(d => !cat || d.cat===cat);
-  if(query){
-    rows = rows.map(d=>({...d, s:score(query,d)})).filter(d=>d.s>15);
-  }else{
-    rows = rows.map(d=>({...d, s:0}));
-  }
-
-  if(sort==="rel" && query) rows.sort((a,b)=>b.s-a.s);
-  else if(sort==="desc")    rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
-  else                      rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
-
-  const total = rows.length;
-  rows = rows.slice(0,limit);
-
-  $("#meta").innerHTML = query
-    ? `“${query}” 검색결과 <b>${total}</b>건`
-    : `전체 <b>${total}</b>건`;
-
+  const query=$("#q").value.trim(), cat=$("#cat").value,
+        limit=+$("#limit").value, sort=$("#sort").value;
+  let rows=DATA.filter(d=>!cat||d.cat===cat);
+  rows = query ? rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>15)
+               : rows.map(d=>({...d,s:0}));
+  if(sort==="rel"&&query) rows.sort((a,b)=>b.s-a.s);
+  else if(sort==="desc")  rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
+  else                    rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
+  const total=rows.length; rows=rows.slice(0,limit);
+  $("#meta").innerHTML = query?`“${query}” 검색결과 <b>${total}</b>건`:`전체 <b>${total}</b>건`;
   if(!rows.length){
-    $("#list").innerHTML = `<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;
-    return;
+    $("#list").innerHTML=`<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;return;
   }
-
-  $("#list").innerHTML = rows.map(d=>`
-    <div class="card">
-      <span class="cat">${d.cat}</span>
+  $("#list").innerHTML=rows.map(d=>`
+    <div class="card"><span class="cat">${d.cat}</span>
       <div class="q">${highlight(d.q,query)}</div>
-      <div class="a">${highlight(d.a,query)}</div>
-    </div>`).join("");
+      <div class="a">${highlight(d.a,query)}</div></div>`).join("");
 }
 
-$("#q").addEventListener("input", render);
-$("#cat").addEventListener("change", render);
-$("#limit").addEventListener("change", render);
-$("#sort").addEventListener("change", render);
-$("#clear").addEventListener("click", ()=>{ $("#q").value=""; $("#q").focus(); render(); });
+/* ── 데이터 로드 ── */
+async function load(){
+  const banner=$("#banner");
+  if(!SHEET_CSV_URL){
+    DATA=SAMPLE;
+    banner.className="banner";
+    banner.innerHTML=`<b>지금은 샘플 데이터로 동작 중이에요.</b><br>
+      구글시트를 웹에 게시(CSV)한 뒤, 코드 위쪽 <code>SHEET_CSV_URL</code> 에 그 주소를 넣으면 실제 족보가 연결돼요.`;
+    buildCats(); render(); return;
+  }
+  banner.className="banner";
+  banner.innerHTML=`<span class="spin"></span>구글시트에서 문제를 불러오는 중…`;
+  try{
+    const res=await fetch(SHEET_CSV_URL);
+    if(!res.ok) throw new Error(res.status);
+    DATA=rowsToData(parseCSV(await res.text()));
+    if(!DATA.length) throw new Error("빈 시트");
+    banner.className=""; banner.innerHTML="";
+    buildCats(); render();
+  }catch(e){
+    DATA=SAMPLE; buildCats(); render();
+    banner.className="banner";
+    banner.innerHTML=`<b>시트를 불러오지 못했어요. 샘플로 표시 중이에요.</b><br>
+      시트가 <b>웹에 게시(CSV)</b> 되어 있는지, 주소가 정확한지 확인해주세요. (오류: ${e.message})`;
+  }
+}
 
-render();
+$("#q").addEventListener("input",render);
+$("#cat").addEventListener("change",render);
+$("#limit").addEventListener("change",render);
+$("#sort").addEventListener("change",render);
+$("#clear").addEventListener("click",()=>{ $("#q").value=""; $("#q").focus(); render(); });
+load();
 </script>
 </body>
 </html>
