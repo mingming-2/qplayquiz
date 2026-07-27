@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>퀴즈 웹족보</title>
+<title>큐플레이 아카이브 웹족보</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
@@ -36,6 +36,11 @@
   #fab:hover{border-color:var(--buzz)}
   #fab:active{transform:scale(.94)}
   #fab svg{width:20px;height:20px}
+  .notice{display:flex;align-items:center;gap:9px;background:rgba(198,241,53,.10);
+    border:1px solid rgba(198,241,53,.35);border-radius:12px;padding:11px 13px;
+    margin-bottom:14px;font-size:13.5px;line-height:1.5;color:var(--text)}
+  .notice svg{width:18px;height:18px;flex:0 0 auto;color:var(--buzz)}
+  .notice b{color:var(--buzz);font-weight:800}
 
   .search{position:relative;margin-bottom:12px}
   .search input{width:100%;padding:16px 46px 16px 18px;font-size:16px;background:var(--surface);
@@ -117,11 +122,16 @@
 <div class="wrap">
   <header>
     <div class="dot"></div>
-    <h1>퀴즈 웹족보<span>문제를 입력하면 정답을 찾아드려요</span></h1>
+    <h1>큐플레이 아카이브 웹족보<span>문제를 입력하면 정답을 찾아드려요</span></h1>
     <button id="fab" aria-label="제보하기" title="제보 / 버그 신고">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
     </button>
   </header>
+
+  <div class="notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+    <span>지금은 여러분의 힘이 필요할 때에요!<br><b>적극적으로 문제를 제보를 해주세요!</b></span>
+  </div>
 
   <div id="banner"></div>
 
