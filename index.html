@@ -248,8 +248,7 @@ function score(query,item){
   const q=norm(query),qt=norm(item.q);
   if(!q) return 0;
   if(qt.includes(q)) return 100-qt.indexOf(q);
-  let hit=0; for(const ch of new Set(q)) if(qt.includes(ch)) hit++;
-  return (hit/new Set(q).size)*40;
+  return 0;
 }
 function highlight(text,query){
   const q=query.trim(); if(!q) return text;
@@ -271,7 +270,7 @@ function render(){
     return;
   }
   let rows=DATA.filter(d=>!cat||d.cat===cat);
-  rows = rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>15);
+  rows = rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>0);
   if(sort==="rel")       rows.sort((a,b)=>b.s-a.s);
   else if(sort==="desc") rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
   else                   rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
