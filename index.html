@@ -245,10 +245,16 @@ function rowsToData(rows){
 
 /* ── 검색 ── */
 function score(query,item){
-  const q=norm(query),qt=norm(item.q);
-  if(!q) return 0;
-  if(qt.includes(q)) return 100-qt.indexOf(q);
-  return 0;
+  const qt=norm(item.q);
+  const tokens=query.trim().split(/\s+/).map(norm).filter(Boolean);
+  if(!tokens.length) return 0;
+  let first=Infinity;
+  for(const t of tokens){
+    const idx=qt.indexOf(t);
+    if(idx===-1) return 0;
+    if(idx<first) first=idx;
+  }
+  return Math.max(1, 100-first);
 }
 function highlight(text,query){
   const q=query.trim(); if(!q) return text;
