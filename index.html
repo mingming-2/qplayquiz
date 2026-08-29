@@ -245,9 +245,9 @@ function rowsToData(rows){
 
 /* ── 검색 ── */
 function score(query,item){
-  const q=norm(query),qt=norm(item.q),at=norm(item.a);
+  const q=norm(query),qt=norm(item.q);
   if(!q) return 0;
-  if(qt.includes(q)||at.includes(q)) return 100-qt.indexOf(q);
+  if(qt.includes(q)) return 100-qt.indexOf(q);
   let hit=0; for(const ch of new Set(q)) if(qt.includes(ch)) hit++;
   return (hit/new Set(q).size)*40;
 }
