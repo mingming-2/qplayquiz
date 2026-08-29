@@ -257,8 +257,9 @@ function score(query,item){
   return Math.max(1, 100-first);
 }
 function highlight(text,query){
-  const q=query.trim(); if(!q) return text;
-  try{ return text.replace(new RegExp("("+esc(q)+")","gi"),"<mark>$1</mark>"); }
+  const tokens=query.trim().split(/\s+/).filter(Boolean);
+  if(!tokens.length) return text;
+  try{ return text.replace(new RegExp("("+tokens.map(esc).join("|")+")","gi"),"<mark>$1</mark>"); }
   catch(e){ return text; }
 }
 function buildCats(){
