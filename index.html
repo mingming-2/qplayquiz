@@ -147,7 +147,7 @@
   </div>
 
   <div class="controls">
-    <select id="cat"><option value="">전체 게임</option></select>
+    <select id="cat"><option value="">게임 선택</option></select>
     <select id="limit">
       <option value="10">10건</option>
       <option value="30" selected>30건</option>
@@ -263,7 +263,7 @@ function highlight(text,query){
   catch(e){ return text; }
 }
 function buildCats(){
-  $("#cat").innerHTML='<option value="">전체 게임</option>';
+  $("#cat").innerHTML='<option value="">게임 선택</option>';
   [...new Set(DATA.map(d=>d.cat))].forEach(c=>{
     const o=document.createElement("option");o.value=c;o.textContent=c;$("#cat").appendChild(o);
   });
@@ -274,6 +274,11 @@ function render(){
   if(!query){
     $("#meta").innerHTML="";
     $("#list").innerHTML=`<div class="empty"><b>문제를 검색해보세요</b>위 칸에 문제 일부만 입력하면 정답이 나와요.</div>`;
+    return;
+  }
+  if(!loaded){
+    $("#meta").innerHTML="";
+    $("#list").innerHTML=`<div class="empty"><b><span class="spin"></span> 문제를 불러오는 중…</b>잠시만 기다려주세요.</div>`;
     return;
   }
   let rows=DATA.filter(d=>!cat||d.cat===cat);
@@ -293,21 +298,23 @@ function render(){
       ${d.by?`<div class="by">제보: <b>${d.by}</b></div>`:""}</div>`).join("");
 }
 
-/* ── 데이터 로드 ── */
-async function load(){
+/* ── 데이터 로드 (필요할 때 한 번만) ── */
+let loaded=false, loading=false;
+async function ensureLoaded(){
+  if(loaded || loading || !SHEET_CSV_URL) return;
+  loading=true;
   const banner=$("#banner");
-  if(!SHEET_CSV_URL){ DATA=[]; buildCats(); render(); return; }
   try{
     const res=await fetch(SHEET_CSV_URL);
     if(!res.ok) throw new Error(res.status);
     DATA=rowsToData(parseCSV(await res.text()));
+    loaded=true;
     banner.className=""; banner.innerHTML="";
     buildCats(); render();
   }catch(e){
-    DATA=[]; buildCats(); render();
     banner.className="banner";
     banner.innerHTML=`<b>시트를 불러오지 못했어요.</b><br>웹에 게시(CSV) 상태와 주소를 확인해주세요. (오류: ${e.message})`;
-  }
+  }finally{ loading=false; }
 }
 
 /* ── 팝업 동작 ── */
@@ -370,18 +377,20 @@ $("#list").addEventListener("click",e=>{
   copyText(el.dataset.copy||"").then(()=>showToast("정답이 복사됐어요!")).catch(()=>showToast("복사에 실패했어요"));
 });
 
-$("#q").addEventListener("input",render);
+$("#q").addEventListener("focus",ensureLoaded);
+$("#q").addEventListener("input",()=>{ ensureLoaded(); render(); });
 $("#q").addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     const first=$("#list .a");
     if(first) copyText(first.dataset.copy||"").then(()=>showToast("맨 위 정답을 복사했어요!")).catch(()=>{});
   }
 });
+$("#cat").addEventListener("mousedown",ensureLoaded);
 $("#cat").addEventListener("change",render);
 $("#limit").addEventListener("change",render);
 $("#sort").addEventListener("change",render);
 $("#clear").addEventListener("click",()=>{ $("#q").value=""; $("#q").focus(); render(); });
-load();
+render();
 </script>
 </body>
 </html>
