@@ -57,15 +57,15 @@
   select:focus{border-color:var(--buzz)}
   .meta{font-size:13px;color:var(--muted);margin:14px 2px 10px}
   .meta b{color:var(--buzz)}
-  .list{display:flex;flex-direction:column;gap:10px}
+  .list{display:flex;flex-direction:column;gap:7px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:16px 16px 14px;animation:rise .25s ease both}
+    padding:11px 14px 10px;animation:rise .25s ease both}
   @keyframes rise{from{opacity:0;transform:translateY(6px)}}
   .cat{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink);
-    background:var(--buzz);padding:3px 9px;border-radius:999px;margin-bottom:9px}
-  .q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
+    background:var(--buzz);padding:3px 9px;border-radius:999px;margin-bottom:7px}
+  .q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:7px}
   .a{display:flex;align-items:baseline;gap:8px;font-size:17px;font-weight:800;color:var(--buzz);
-    border-top:1px dashed var(--line);padding-top:10px;cursor:pointer}
+    border-top:1px dashed var(--line);padding-top:8px;cursor:pointer}
   .a .cp{align-self:center;margin-left:auto;width:15px;height:15px;color:var(--muted);flex:0 0 auto}
   .a:hover .cp{color:var(--buzz)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -75,7 +75,7 @@
   .a::before{content:"정답";font-size:11px;font-weight:700;color:var(--hot);letter-spacing:.04em;
     flex:0 0 auto;transform:translateY(-1px)}
   mark{background:rgba(255,77,151,.25);color:var(--text);border-radius:3px;padding:0 2px}
-  .by{margin-top:8px;text-align:right;font-size:11px;color:var(--muted)}
+  .by{margin-top:6px;text-align:right;font-size:11px;color:var(--muted)}
   .by b{color:var(--muted);font-weight:600}
   .empty{text-align:center;color:var(--muted);padding:48px 16px;font-size:14px}
   .empty b{color:var(--text);display:block;margin-bottom:6px;font-size:15px}
@@ -141,11 +141,6 @@
 
   <div id="banner"></div>
 
-  <div class="search">
-    <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off">
-    <button class="clear" id="clear" title="지우기">✕</button>
-  </div>
-
   <div class="controls">
     <select id="cat"><option value="">게임 선택</option></select>
     <select id="limit">
@@ -159,6 +154,11 @@
       <option value="asc">가나다↑</option>
       <option value="desc">가나다↓</option>
     </select>
+  </div>
+
+  <div class="search">
+    <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off">
+    <button class="clear" id="clear" title="지우기">✕</button>
   </div>
 
   <div class="meta" id="meta"></div>
@@ -216,7 +216,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Eh0qiz
 const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyuaLVZjwwzJX9o1jVkeicriEGCgOOCslr3YAownXYL6KcqlfuFxWChTcXbDA5I2_4s/exec";
 
 const $ = s => document.querySelector(s);
-const norm = s => s.toLowerCase().replace(/\s+/g,"");
+const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
@@ -292,7 +292,7 @@ function render(){
     $("#list").innerHTML=`<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;return;
   }
   $("#list").innerHTML=rows.map(d=>`
-    <div class="card"><span class="cat">${d.cat}</span>
+    <div class="card">${cat?"":`<span class="cat">${d.cat}</span>`}
       <div class="q">${highlight(d.q,query)}</div>
       <div class="a" data-copy="${escAttr(d.a)}">${highlight(d.a,query)}<svg class="cp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
       ${d.by?`<div class="by">제보: <b>${d.by}</b></div>`:""}</div>`).join("");
