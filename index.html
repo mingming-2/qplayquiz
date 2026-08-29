@@ -65,7 +65,13 @@
     background:var(--buzz);padding:3px 9px;border-radius:999px;margin-bottom:9px}
   .q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
   .a{display:flex;align-items:baseline;gap:8px;font-size:17px;font-weight:800;color:var(--buzz);
-    border-top:1px dashed var(--line);padding-top:10px}
+    border-top:1px dashed var(--line);padding-top:10px;cursor:pointer}
+  .a .cp{align-self:center;margin-left:auto;width:15px;height:15px;color:var(--muted);flex:0 0 auto}
+  .a:hover .cp{color:var(--buzz)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--buzz);color:var(--ink);font-weight:800;font-size:14px;padding:10px 18px;
+    border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:200}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .a::before{content:"정답";font-size:11px;font-weight:700;color:var(--hot);letter-spacing:.04em;
     flex:0 0 auto;transform:translateY(-1px)}
   mark{background:rgba(255,77,151,.25);color:var(--text);border-radius:3px;padding:0 2px}
@@ -161,6 +167,8 @@
   <footer></footer>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <!-- 제보 / 버그 신고 팝업 -->
 <div class="modal-bg" id="modal" hidden>
   <div class="modal">
@@ -210,6 +218,7 @@ const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyuaLVZjwwzJX9o
 const $ = s => document.querySelector(s);
 const norm = s => s.toLowerCase().replace(/\s+/g,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
 
 /* ── CSV 파서 ── */
@@ -274,7 +283,7 @@ function render(){
   $("#list").innerHTML=rows.map(d=>`
     <div class="card"><span class="cat">${d.cat}</span>
       <div class="q">${highlight(d.q,query)}</div>
-      <div class="a">${highlight(d.a,query)}</div>
+      <div class="a" data-copy="${escAttr(d.a)}">${highlight(d.a,query)}<svg class="cp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
       ${d.by?`<div class="by">제보: <b>${d.by}</b></div>`:""}</div>`).join("");
 }
 
@@ -344,7 +353,24 @@ $("#send-b").addEventListener("click",e=>{
   submit("bug", {symptom}, e.currentTarget);
 });
 
+const toast=$("#toast"); let toastT;
+function showToast(t){ toast.textContent=t; toast.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove("show"),1300); }
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+  return new Promise((res,rej)=>{ try{ const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); res(); }catch(e){ rej(e); } });
+}
+$("#list").addEventListener("click",e=>{
+  const el=e.target.closest(".a"); if(!el) return;
+  copyText(el.dataset.copy||"").then(()=>showToast("정답이 복사됐어요!")).catch(()=>showToast("복사에 실패했어요"));
+});
+
 $("#q").addEventListener("input",render);
+$("#q").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const first=$("#list .a");
+    if(first) copyText(first.dataset.copy||"").then(()=>showToast("맨 위 정답을 복사했어요!")).catch(()=>{});
+  }
+});
 $("#cat").addEventListener("change",render);
 $("#limit").addEventListener("change",render);
 $("#sort").addEventListener("change",render);
