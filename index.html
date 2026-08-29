@@ -77,6 +77,8 @@
   mark{background:rgba(255,77,151,.25);color:var(--text);border-radius:3px;padding:0 2px}
   .by{margin-top:6px;text-align:right;font-size:11px;color:var(--muted)}
   .by b{color:var(--muted);font-weight:600}
+  .card.top{border-color:var(--buzz);box-shadow:0 0 0 1px var(--buzz)}
+  .autonote{color:var(--buzz);font-weight:700}
   .empty{text-align:center;color:var(--muted);padding:48px 16px;font-size:14px}
   .empty b{color:var(--text);display:block;margin-bottom:6px;font-size:15px}
   .banner{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);
@@ -220,6 +222,8 @@ const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
+/* 이 게임을 선택하면 검색 즉시 맨 위 정답이 자동 복사돼요 (꽁꽁=주관식) */
+const AUTOCOPY_GAME = "꽁꽁";
 
 /* ── CSV 파서 ── */
 function parseCSV(text){
@@ -287,15 +291,18 @@ function render(){
   else if(sort==="desc") rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
   else                   rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
   const total=rows.length; rows=rows.slice(0,limit);
-  $("#meta").innerHTML=`“${query}” 검색결과 <b>${total}</b>건`;
+  const auto=(cat===AUTOCOPY_GAME);
   if(!rows.length){
+    $("#meta").innerHTML=`“${query}” 검색결과 <b>0</b>건`;
     $("#list").innerHTML=`<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;return;
   }
-  $("#list").innerHTML=rows.map(d=>`
-    <div class="card">${cat?"":`<span class="cat">${d.cat}</span>`}
+  $("#meta").innerHTML=`“${query}” 검색결과 <b>${total}</b>건`+(auto?` · <span class="autonote">맨 위 정답 자동 복사됨</span>`:"");
+  $("#list").innerHTML=rows.map((d,i)=>`
+    <div class="card${auto&&i===0?" top":""}">${cat?"":`<span class="cat">${d.cat}</span>`}
       <div class="q">${highlight(d.q,query)}</div>
       <div class="a" data-copy="${escAttr(d.a)}">${highlight(d.a,query)}<svg class="cp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
       ${d.by?`<div class="by">제보: <b>${d.by}</b></div>`:""}</div>`).join("");
+  if(auto) copyText(rows[0].a).catch(()=>{});
 }
 
 /* ── 데이터 로드 (필요할 때 한 번만) ── */
