@@ -22,7 +22,7 @@
     color:var(--text);min-height:100vh;padding:20px 16px 60px;line-height:1.5;
   }
   .wrap{max-width:720px;margin:0 auto}
-  header{display:flex;align-items:center;gap:12px;margin:8px 2px 18px}
+  header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:8px 2px 18px}
   .dot{width:22px;height:22px;border-radius:50%;background:var(--buzz);
     box-shadow:0 0 0 4px rgba(198,241,53,.18),0 0 22px rgba(198,241,53,.55);
     animation:pulse 2.4s ease-in-out infinite;flex:0 0 auto}
@@ -30,12 +30,26 @@
   h1{font-size:20px;font-weight:800;letter-spacing:-.02em;flex:1}
   h1 span{color:var(--muted);font-weight:600;font-size:13px;display:block;letter-spacing:0}
   /* 상단 우측 제보 버튼 */
-  #fab{flex:0 0 auto;width:42px;height:42px;border-radius:12px;border:1.5px solid var(--line);
-    background:var(--surface);color:var(--buzz);cursor:pointer;display:flex;
-    align-items:center;justify-content:center;transition:border-color .15s, transform .1s}
-  #fab:hover{border-color:var(--buzz)}
-  #fab:active{transform:scale(.94)}
-  #fab svg{width:20px;height:20px}
+  .hbtns{display:flex;gap:8px;margin-left:auto}
+  .hbtn{height:42px;padding:0 13px;border-radius:12px;border:1.5px solid var(--line);
+    background:var(--surface);color:var(--buzz);cursor:pointer;display:inline-flex;
+    align-items:center;gap:7px;font-family:inherit;font-size:14px;font-weight:700;
+    transition:border-color .15s, transform .1s}
+  .hbtn span{color:var(--text)}
+  .hbtn:hover{border-color:var(--buzz)}
+  .hbtn:active{transform:scale(.94)}
+  .hbtn svg{width:19px;height:19px}
+  .mtitle{font-size:15px;font-weight:800;color:var(--text);padding:12px 8px}
+  .info-body{padding:16px;max-height:70vh;overflow:auto}
+  .upd{padding:11px 0;border-bottom:1px solid var(--line)}
+  .upd:last-child{border-bottom:0}
+  .upd .d{font-size:12px;font-weight:700;color:var(--buzz);margin-bottom:3px}
+  .upd .m{font-size:14px;color:var(--text);line-height:1.55;white-space:pre-wrap}
+  .guide h4{font-size:14px;font-weight:800;color:var(--buzz);margin:14px 0 5px}
+  .guide h4:first-child{margin-top:0}
+  .guide p{font-size:14px;color:var(--text);line-height:1.6;margin:0}
+  .guide kbd{background:var(--ink);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-size:12px;font-family:inherit;color:var(--text)}
   .notice{display:flex;align-items:center;gap:9px;background:rgba(198,241,53,.10);
     border:1px solid rgba(198,241,53,.35);border-radius:12px;padding:11px 13px;
     margin-bottom:14px;font-size:13.5px;line-height:1.5;color:var(--text)}
@@ -131,9 +145,17 @@
   <header>
     <div class="dot"></div>
     <h1>큐플레이 아카이브 웹족보<span>문제를 입력하면 정답을 찾아드려요</span></h1>
-    <button id="fab" aria-label="제보하기" title="제보 / 버그 신고">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-    </button>
+    <div class="hbtns">
+      <button class="hbtn" id="btn-guide" aria-label="사용법" title="사용법">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7"/><path d="M12 17h.01"/></svg><span>사용법</span>
+      </button>
+      <button class="hbtn" id="btn-news" aria-label="공지사항" title="공지사항">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span>공지사항</span>
+      </button>
+      <button class="hbtn" id="fab" aria-label="제보하기" title="제보 / 버그 신고">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>제보</span>
+      </button>
+    </div>
   </header>
 
   <div class="notice">
@@ -144,7 +166,12 @@
   <div id="banner"></div>
 
   <div class="controls">
-    <select id="cat"><option value="">게임 선택</option></select>
+    <select id="cat"><option value="">게임 선택</option>
+      <option value="올라올라(꼬로록)">올라올라(꼬로록)</option>
+      <option value="꽁꽁">꽁꽁</option>
+      <option value="OX,XO">OX,XO</option>
+      <option value="가로세로">가로세로</option>
+    </select>
     <select id="limit">
       <option value="10">10건</option>
       <option value="30" selected>30건</option>
@@ -204,6 +231,17 @@
   </div>
 </div>
 
+<!-- 업데이트 소식 / 사용법 팝업 -->
+<div class="modal-bg" id="infoModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <span class="mtitle" id="infoTitle"></span>
+      <button class="mclose" id="infoClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="info-body" id="infoBody"></div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════════════════════
    ① 문제 데이터를 읽어올 구글시트 CSV 주소 (이미 넣어뒀어요)
@@ -216,6 +254,14 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Eh0qiz
       예: "https://script.google.com/macros/s/XXXX/exec"
    ══════════════════════════════════════════════════════════ */
 const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyuaLVZjwwzJX9o1jVkeicriEGCgOOCslr3YAownXYL6KcqlfuFxWChTcXbDA5I2_4s/exec";
+
+/* ══════════════════════════════════════════════════════════
+   ③ "업데이트 소식" 탭의 CSV 주소 (선택)
+      시트에 새 탭(예: 공지)을 만들어 날짜 / 내용 두 칸으로 적고,
+      파일 → 공유 → 웹에 게시에서 그 탭을 CSV로 게시한 주소를 넣으세요.
+      비워두면 확성기 버튼엔 기본 안내가 떠요.
+   ══════════════════════════════════════════════════════════ */
+const UPDATES_CSV_URL = "https://docs.google.com/spreadsheets/d/129IiHb4cy_b66_e5DM4Cjmflnou0GFI13ZjwPwavrjs/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("공지");
 
 const $ = s => document.querySelector(s);
 const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
@@ -248,17 +294,27 @@ function rowsToData(rows){
 }
 
 /* ── 검색 ── */
+function isSubseq(q, text){ // q의 글자들이 text에 순서대로 나타나면 true
+  let i=0;
+  for(let j=0;j<text.length && i<q.length;j++){ if(text[j]===q[i]) i++; }
+  return i===q.length;
+}
 function score(query,item){
   const qt=norm(item.q);
   const tokens=query.trim().split(/\s+/).map(norm).filter(Boolean);
   if(!tokens.length) return 0;
-  let first=Infinity;
+  // 1) 모든 단어가 '붙어있는 그대로' 들어있으면 최고점
+  let allSub=true, first=Infinity;
   for(const t of tokens){
     const idx=qt.indexOf(t);
-    if(idx===-1) return 0;
+    if(idx===-1){ allSub=false; break; }
     if(idx<first) first=idx;
   }
-  return Math.max(1, 100-first);
+  if(allSub) return Math.max(40, 100-first);
+  // 2) 폴백: 공백 뺀 검색어가 문제에 '순서대로'(중간 글자 건너뛰기 허용) 나타나면 낮은 점수
+  const q=tokens.join("");
+  if(q.length>=3 && isSubseq(q, qt)) return 25;
+  return 0;
 }
 function highlight(text,query){
   const tokens=query.trim().split(/\s+/).filter(Boolean);
@@ -266,12 +322,7 @@ function highlight(text,query){
   try{ return text.replace(new RegExp("("+tokens.map(esc).join("|")+")","gi"),"<mark>$1</mark>"); }
   catch(e){ return text; }
 }
-function buildCats(){
-  $("#cat").innerHTML='<option value="">게임 선택</option>';
-  [...new Set(DATA.map(d=>d.cat))].forEach(c=>{
-    const o=document.createElement("option");o.value=c;o.textContent=c;$("#cat").appendChild(o);
-  });
-}
+function buildCats(){ /* 게임 목록은 고정이라 HTML에 미리 넣어둠 (즉시 표시) */ }
 function render(){
   const query=$("#q").value.trim(), cat=$("#cat").value,
         limit=+$("#limit").value, sort=$("#sort").value;
@@ -331,6 +382,60 @@ function closeModal(){ modal.hidden=true; msg.textContent=""; msg.className="msg
 $("#fab").addEventListener("click",openModal);
 $("#mclose").addEventListener("click",closeModal);
 modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
+
+/* ── 업데이트 소식 / 사용법 팝업 ── */
+const infoModal=$("#infoModal");
+function openInfo(title,html){ $("#infoTitle").textContent=title; $("#infoBody").innerHTML=html; infoModal.hidden=false; }
+function closeInfo(){ infoModal.hidden=true; }
+$("#infoClose").addEventListener("click",closeInfo);
+infoModal.addEventListener("click",e=>{ if(e.target===infoModal) closeInfo(); });
+
+const GUIDE_HTML=`<div class="guide">
+  <h4>문제 검색</h4>
+  <p>위에서 게임을 고르고, 검색창에 문제 일부만 입력하면 정답이 나와요. 띄어쓰기·물음표는 무시하니 대충 쳐도 되고, 여러 단어를 띄어서 치면 그 단어가 모두 들어간 문제를 찾아줘요.</p>
+  <h4>정답 복사</h4>
+  <p>정답을 클릭하면 복사돼요. 검색창에서 <kbd>Enter</kbd>를 누르면 맨 위 정답이 복사되고요.</p>
+  <h4>꽁꽁 자동 복사</h4>
+  <p>꽁꽁(주관식) 게임을 선택하면, 검색하는 즉시 맨 위 정답이 자동으로 복사돼요. 바로 붙여넣기(<kbd>Ctrl+V</kbd>) 하면 돼요.</p>
+  <h4>지우기</h4>
+  <p>검색창의 ✕ 버튼이나 <kbd>ESC</kbd> 키로 검색어를 지워요.</p>
+  <h4>제보 / 버그 신고</h4>
+  <p>상단 편지 버튼으로 새 문제를 제보하거나 오류를 신고할 수 있어요. 여러분의 제보로 족보가 채워져요!</p>
+</div>`;
+$("#btn-guide").addEventListener("click",()=>openInfo("사용법", GUIDE_HTML));
+
+async function openUpdates(){
+  openInfo("공지사항", `<div style="text-align:center;color:var(--muted);padding:24px 0"><span class="spin"></span> 불러오는 중…</div>`);
+  if(!UPDATES_CSV_URL){
+    $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px;line-height:1.6">아직 공지사항이 연결되지 않았어요.</div>`;
+    return;
+  }
+  try{
+    const res=await fetch(UPDATES_CSV_URL);
+    if(!res.ok) throw new Error(res.status);
+    let rows=parseCSV(await res.text()).filter(r=>{
+      const a=(r[0]||"").trim(), b=(r[1]||"").trim();
+      if(!a && !b) return false;                 // 빈 줄 제외
+      if(a==="업데이트 날짜" || b==="업데이트 내용") return false; // 제목 줄 제외
+      return true;
+    });
+    rows.sort((x,y)=>(y[0]||"").localeCompare((x[0]||""),"ko")); // 날짜 최신순
+    if(!rows.length){ $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px">등록된 공지가 없어요.</div>`; return; }
+    $("#infoBody").innerHTML=rows.map(r=>`<div class="upd"><div class="d">${escAttr((r[0]||"").trim())}</div><div class="m">${escAttr((r[1]||"").trim())}</div></div>`).join("");
+  }catch(e){
+    $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px;line-height:1.6">공지를 불러오지 못했어요.<br>시트 공유가 “링크가 있는 모든 사용자: 뷰어”인지 확인해주세요. (오류: ${e.message})</div>`;
+  }
+}
+$("#btn-news").addEventListener("click",openUpdates);
+
+/* ── ESC: 팝업 닫기 / 검색어 지우기 ── */
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape") return;
+  if(!infoModal.hidden){ closeInfo(); return; }
+  if(!modal.hidden){ closeModal(); return; }
+  if($("#q").value){ $("#q").value=""; render(); }
+});
+
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   t.classList.add("active");
