@@ -500,7 +500,8 @@ $("#q").addEventListener("keydown",e=>{
   }
 });
 $("#cat").addEventListener("mousedown",ensureLoaded);
-$("#cat").addEventListener("change",render);
+$("#cat").addEventListener("focus",ensureLoaded);
+$("#cat").addEventListener("change",()=>{ ensureLoaded(); render(); });
 $("#limit").addEventListener("change",render);
 $("#sort").addEventListener("change",render);
 $("#clear").addEventListener("click",()=>{ $("#q").value=""; $("#q").focus(); render(); });
