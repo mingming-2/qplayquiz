@@ -290,18 +290,19 @@ function parseCSV(text){
 function rowsToData(rows){
   return rows.slice(1)
     .filter(r=>r.length>=3 && (r[1]||"").trim())
-    .map(r=>({ cat:(r[0]||"기타").trim(), q:(r[1]||"").trim(), a:(r[2]||"").trim(), by:(r[3]||"").trim() }));
+    .map(r=>{
+      const q=(r[1]||"").trim();
+      return { cat:(r[0]||"기타").trim(), q, a:(r[2]||"").trim(), by:(r[3]||"").trim(), qn:norm(q) };
+    });
 }
 
 /* ── 검색 ── */
-function isSubseq(q, text){ // q의 글자들이 text에 순서대로 나타나면 true
-  let i=0;
-  for(let j=0;j<text.length && i<q.length;j++){ if(text[j]===q[i]) i++; }
-  return i===q.length;
+function allCharsIn(q, text){ // q의 모든 글자가 text에 있으면 true (순서 무관)
+  for(const ch of new Set(q)){ if(!text.includes(ch)) return false; }
+  return true;
 }
-function score(query,item){
-  const qt=norm(item.q);
-  const tokens=query.trim().split(/\s+/).map(norm).filter(Boolean);
+function score(tokens,qjoined,item){
+  const qt=item.qn||norm(item.q);
   if(!tokens.length) return 0;
   // 1) 모든 단어가 '붙어있는 그대로' 들어있으면 최고점
   let allSub=true, first=Infinity;
@@ -311,9 +312,8 @@ function score(query,item){
     if(idx<first) first=idx;
   }
   if(allSub) return Math.max(40, 100-first);
-  // 2) 폴백: 공백 뺀 검색어가 문제에 '순서대로'(중간 글자 건너뛰기 허용) 나타나면 낮은 점수
-  const q=tokens.join("");
-  if(q.length>=3 && isSubseq(q, qt)) return 25;
+  // 2) 폴백: 검색어의 모든 글자가 문제에 있으면(순서 무관) 낮은 점수
+  if(qjoined.length>=3 && allCharsIn(qjoined, qt)) return 25;
   return 0;
 }
 function highlight(text,query){
@@ -337,7 +337,9 @@ function render(){
     return;
   }
   let rows=DATA.filter(d=>!cat||d.cat===cat);
-  rows = rows.map(d=>({...d,s:score(query,d)})).filter(d=>d.s>0);
+  const tokens=query.split(/\s+/).map(norm).filter(Boolean);
+  const qjoined=tokens.join("");
+  rows = rows.map(d=>({...d,s:score(tokens,qjoined,d)})).filter(d=>d.s>0);
   if(sort==="rel")       rows.sort((a,b)=>b.s-a.s);
   else if(sort==="desc") rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
   else                   rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
