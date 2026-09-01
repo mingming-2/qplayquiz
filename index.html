@@ -244,9 +244,11 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════
-   ① 문제 데이터를 읽어올 구글시트 CSV 주소 (이미 넣어뒀어요)
+   ① 문제 데이터 파일 (사이트에 같이 올려둔 파일에서 읽어요)
+      구글시트 → 파일 → 다운로드 → CSV 로 내려받아
+      questions.csv 로 이름 바꿔 GitHub에 올리면 돼요.
    ══════════════════════════════════════════════════════════ */
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Eh0qizgj9xTEyFtEPWvhIlioj-Vd4MYtpCVSiAALBu-KaG2NVj68qWFhbOJ4SO6vXch4pSlRSGq8/pub?output=csv";
+const SHEET_CSV_URL = "questions.csv";
 
 /* ══════════════════════════════════════════════════════════
    ② 제보/신고를 시트에 저장할 "앱스 스크립트 웹앱 주소"를 넣으세요.
@@ -256,12 +258,12 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Eh0qiz
 const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyuaLVZjwwzJX9o1jVkeicriEGCgOOCslr3YAownXYL6KcqlfuFxWChTcXbDA5I2_4s/exec";
 
 /* ══════════════════════════════════════════════════════════
-   ③ "업데이트 소식" 탭의 CSV 주소 (선택)
-      시트에 새 탭(예: 공지)을 만들어 날짜 / 내용 두 칸으로 적고,
-      파일 → 공유 → 웹에 게시에서 그 탭을 CSV로 게시한 주소를 넣으세요.
-      비워두면 확성기 버튼엔 기본 안내가 떠요.
+   ③ 공지사항 파일 (사이트에 같이 올려둔 파일에서 읽어요)
+      "업데이트 날짜, 업데이트 내용" 두 칸짜리 CSV예요.
+      GitHub에서 notice.csv 를 직접 고치거나,
+      시트 공지 탭을 CSV로 내려받아 notice.csv 로 올리면 돼요.
    ══════════════════════════════════════════════════════════ */
-const UPDATES_CSV_URL = "https://docs.google.com/spreadsheets/d/129IiHb4cy_b66_e5DM4Cjmflnou0GFI13ZjwPwavrjs/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("공지");
+const UPDATES_CSV_URL = "notice.csv";
 
 const $ = s => document.querySelector(s);
 const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
@@ -373,7 +375,7 @@ async function ensureLoaded(){
     buildCats(); render();
   }catch(e){
     banner.className="banner";
-    banner.innerHTML=`<b>시트를 불러오지 못했어요.</b><br>웹에 게시(CSV) 상태와 주소를 확인해주세요. (오류: ${e.message})`;
+    banner.innerHTML=`<b>문제를 불러오지 못했어요.</b><br>questions.csv 파일이 사이트에 올라가 있는지 확인해주세요. (오류: ${e.message})`;
   }finally{ loading=false; }
 }
 
@@ -425,7 +427,7 @@ async function openUpdates(){
     if(!rows.length){ $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px">등록된 공지가 없어요.</div>`; return; }
     $("#infoBody").innerHTML=rows.map(r=>`<div class="upd"><div class="d">${escAttr((r[0]||"").trim())}</div><div class="m">${escAttr((r[1]||"").trim())}</div></div>`).join("");
   }catch(e){
-    $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px;line-height:1.6">공지를 불러오지 못했어요.<br>시트 공유가 “링크가 있는 모든 사용자: 뷰어”인지 확인해주세요. (오류: ${e.message})</div>`;
+    $("#infoBody").innerHTML=`<div style="color:var(--muted);font-size:14px;line-height:1.6">공지를 불러오지 못했어요.<br>notice.csv 파일이 사이트에 올라가 있는지 확인해주세요. (오류: ${e.message})</div>`;
   }
 }
 $("#btn-news").addEventListener("click",openUpdates);
