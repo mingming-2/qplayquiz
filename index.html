@@ -244,11 +244,17 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════
-   ① 문제 데이터 파일 (사이트에 같이 올려둔 파일에서 읽어요)
-      구글시트 → 파일 → 다운로드 → CSV 로 내려받아
-      questions.csv 로 이름 바꿔 GitHub에 올리면 돼요.
+   ① 문제 데이터 (코드에 암호화되어 들어있어요 · 네트워크 탭에 안 보임)
+      문제를 바꿀 땐 convert.html(변환 도구)에 새 CSV를 넣어
+      나온 값으로 아래 DATA_ENC 를 통째로 교체하면 돼요.
    ══════════════════════════════════════════════════════════ */
-const SHEET_CSV_URL = "questions.csv";
+const DATA_KEY = "qplay!2026#kkong";
+const DATA_ENC = "m8LgjeelHtuejs/L90OCx+Sb59RVzZKs2YWXh/X/ZIvp3If8xc2qnNmrn0OB08KM0OyHwOQIHty2jsnY74P595308EGTkbLcrJMDgO39gvrxUIDjyc2vsA0az/z7hNzHmtDkjfOF37qKGimB1u6E2vBch+35zKes2Zmfgd7CgvrpUIDp4cq9tNm8t1RHg+r7nerUTXMDfWgebmxJR4LgypvH6I3koRLcsb7I4M9DNkt7mtzhkoCu3LaOyMr3Q4P8+ZvD3ZWBp9yvus/270+FwP2b/8FZzaul3qujVEeD6t+d0umK9aHeqacaKQ==";
+function decodeData(){
+  const bin=atob(DATA_ENC), key=DATA_KEY, out=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i)^key.charCodeAt(i%key.length);
+  return new TextDecoder().decode(out);
+}
 
 /* ══════════════════════════════════════════════════════════
    ② 제보/신고를 시트에 저장할 "앱스 스크립트 웹앱 주소"를 넣으세요.
@@ -360,23 +366,20 @@ function render(){
   if(auto) copyText(rows[0].a).catch(()=>{});
 }
 
-/* ── 데이터 로드 (필요할 때 한 번만) ── */
-let loaded=false, loading=false;
-async function ensureLoaded(){
-  if(loaded || loading || !SHEET_CSV_URL) return;
-  loading=true;
+/* ── 데이터 로드 (코드 내장 데이터 복호화) ── */
+let loaded=false;
+function ensureLoaded(){
+  if(loaded) return;
   const banner=$("#banner");
   try{
-    const res=await fetch(SHEET_CSV_URL);
-    if(!res.ok) throw new Error(res.status);
-    DATA=rowsToData(parseCSV(await res.text()));
+    DATA=rowsToData(parseCSV(decodeData()));
     loaded=true;
     banner.className=""; banner.innerHTML="";
     buildCats(); render();
   }catch(e){
     banner.className="banner";
-    banner.innerHTML=`<b>문제를 불러오지 못했어요.</b><br>questions.csv 파일이 사이트에 올라가 있는지 확인해주세요. (오류: ${e.message})`;
-  }finally{ loading=false; }
+    banner.innerHTML=`<b>문제 데이터를 여는 데 실패했어요.</b> (오류: ${e.message})`;
+  }
 }
 
 /* ── 팝업 동작 ── */
@@ -507,6 +510,7 @@ $("#cat").addEventListener("change",()=>{ ensureLoaded(); render(); });
 $("#limit").addEventListener("change",render);
 $("#sort").addEventListener("change",render);
 $("#clear").addEventListener("click",()=>{ $("#q").value=""; $("#q").focus(); render(); });
+ensureLoaded();
 render();
 </script>
 </body>
