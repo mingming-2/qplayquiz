@@ -384,7 +384,8 @@ async function ensureLoaded(){
     buildCats(); render();
   }catch(e){
     banner.className="banner";
-    banner.innerHTML=`<b>문제 데이터를 여는 데 실패했어요.</b><br>qdata.txt 파일이 올라가 있는지 확인해주세요. (오류: ${e.message})`;
+    console.error("데이터 로드 실패:", e);
+    banner.innerHTML=`<b>문제 데이터를 여는 데 실패했어요.</b><br>잠시 후 다시 시도해 주세요.`;
   }finally{ loading=false; }
 }
 
