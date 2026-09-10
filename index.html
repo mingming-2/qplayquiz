@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>큐플레이 아카이브 웹족보</title>
+<title>큐플레이 아카이브 족보 | 큐플레이 족보 · 밍밍족보</title>
+<meta name="description" content="큐플레이 아카이브 족보 검색 사이트. 큐플레이 족보, 밍밍족보 - 올라올라(꼬로록), 꽁꽁, OX·XO, 가로세로 문제를 입력하면 정답을 바로 찾아드려요.">
+<meta name="keywords" content="큐플레이 아카이브 족보, 큐플레이 족보, 큐플레이 밍밍족보, 밍밍족보, 큐플레이 웹족보, 큐플레이 아카이브">
+<meta property="og:title" content="큐플레이 아카이브 족보">
+<meta property="og:description" content="큐플레이 족보 검색 - 문제를 입력하면 정답을 찾아드려요. (큐플레이 족보 · 밍밍족보)">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
@@ -41,6 +46,37 @@
   .hbtn svg{width:19px;height:19px}
   .mtitle{font-size:15px;font-weight:800;color:var(--text);padding:12px 8px}
   .info-body{padding:16px;max-height:70vh;overflow:auto}
+  /* 빠른 독음 찾기 */
+  .searchrow{display:flex;gap:8px;margin-bottom:12px}
+  .searchrow .search{flex:1;margin-bottom:0}
+  .dokeum-btn{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:0 16px;font-size:15px;white-space:nowrap;
+    font-weight:500;font-family:inherit;cursor:pointer;background:var(--surface);color:var(--buzz);
+    border:1.5px solid var(--line);border-radius:var(--radius);transition:border-color .15s}
+  .dokeum-btn:hover{border-color:var(--buzz)}
+  .dk-modal{max-width:560px;display:flex;flex-direction:column;max-height:92vh}
+  .dk-sub{font-size:12px;color:var(--muted);padding:0 8px 2px}
+  .dk-tabs{display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap}
+  .dk-tab{font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--muted);
+    background:var(--surface-2);border:0;padding:6px 12px;border-radius:999px}
+  .dk-tab.on{color:var(--ink);background:var(--buzz)}
+  .dk-search{padding:11px 14px 0}
+  .dk-search input{width:100%;box-sizing:border-box;padding:10px 12px;font-size:15px;font-family:inherit;
+    background:var(--ink);border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none}
+  .dk-search input:focus{border-color:var(--buzz)}
+  .dk-jump{display:flex;gap:5px;padding:9px 14px 0;flex-wrap:wrap}
+  .dk-jump span{font-size:12px;font-weight:700;color:var(--muted);background:var(--surface-2);
+    padding:3px 9px;border-radius:7px;cursor:pointer}
+  .dk-jump span:hover{color:var(--buzz)}
+  .dk-body{flex:1;overflow-y:auto;padding:12px 14px 16px}
+  .dk-sec{font-size:12px;font-weight:700;color:var(--buzz);margin:14px 2px 7px}
+  .dk-sec:first-child{margin-top:2px}
+  .dk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .dk-card{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 3px 9px;text-align:center;cursor:pointer;transition:border-color .1s}
+  .dk-card.copyable:hover{border-color:var(--buzz)}
+  .dk-card .hanja{font-size:29px;font-weight:200;color:var(--buzz);line-height:1.1;word-break:keep-all}
+  .dk-card .kor{font-size:13px;font-weight:600;color:#B9BEE6;margin-top:5px}
+  .dk-empty{text-align:center;color:var(--muted);font-size:14px;padding:32px 0}
   .upd{padding:11px 0;border-bottom:1px solid var(--line)}
   .upd:last-child{border-bottom:0}
   .upd .d{font-size:12px;font-weight:700;color:var(--buzz);margin-bottom:3px}
@@ -185,9 +221,12 @@
     </select>
   </div>
 
-  <div class="search">
-    <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off">
-    <button class="clear" id="clear" title="지우기">✕</button>
+  <div class="searchrow">
+    <div class="search">
+      <input id="q" type="text" placeholder="문제 일부만 입력해도 돼요…" autocomplete="off">
+      <button class="clear" id="clear" title="지우기">✕</button>
+    </div>
+    <button id="dokeum-open" class="dokeum-btn" hidden>📖 독음</button>
   </div>
 
   <div class="meta" id="meta"></div>
@@ -239,6 +278,23 @@
       <button class="mclose" id="infoClose" aria-label="닫기">✕</button>
     </div>
     <div class="info-body" id="infoBody"></div>
+  </div>
+</div>
+
+<!-- 독음 빠른찾기 팝업 -->
+<div class="modal-bg" id="dkModal" hidden>
+  <div class="modal dk-modal">
+    <div class="modal-head">
+      <div>
+        <span class="mtitle" id="dkTitle">빠른 독음 찾기</span>
+        <div class="dk-sub" id="dkSub">카드를 눌러 복사</div>
+      </div>
+      <button class="mclose" id="dkClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="dk-tabs" id="dkTabs"></div>
+    <div class="dk-search"><input id="dkq" type="text" placeholder="독음이나 한자로 찾기…" autocomplete="off"></div>
+    <div class="dk-jump" id="dkJump"></div>
+    <div class="dk-body" id="dkBody"></div>
   </div>
 </div>
 
@@ -442,9 +498,107 @@ async function openUpdates(){
 }
 $("#btn-news").addEventListener("click",openUpdates);
 
+/* ── 독음 빠른찾기 ── */
+const dkModal=$("#dkModal");
+let dkGame="", dkType="전체", dkTypeList=[], DOKEUM=null;
+async function dkEnsure(){
+  if(DOKEUM) return;
+  const res=await fetch("d7k2m9x.txt");
+  if(!res.ok) throw new Error(res.status);
+  const bin=atob((await res.text()).trim()), key=DATA_KEY, bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i)^key.charCodeAt(i%key.length);
+  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  DOKEUM=JSON.parse(new TextDecoder().decode(await new Response(stream).arrayBuffer()));
+}
+function dkList(){ return (DOKEUM||[]).filter(d=>d.g===dkGame).map(d=>({hanja:d.h,kor:d.k,type:d.t})); }
+function choseong(kr){
+  const map={"ㄲ":"ㄱ","ㄸ":"ㄷ","ㅃ":"ㅂ","ㅆ":"ㅅ","ㅉ":"ㅈ"};
+  const c=(kr||"").charCodeAt(0);
+  if(c>=0xAC00&&c<=0xD7A3){
+    const cho=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"][Math.floor((c-0xAC00)/588)];
+    return map[cho]||cho;
+  }
+  return "#";
+}
+function dkRender(){
+  const copyable = dkGame==="꽁꽁";
+  let items=dkList();
+  if(dkType!=="전체") items=items.filter(x=>x.type===dkType);
+  const kw=norm($("#dkq").value);
+  if(kw) items=items.filter(x=>norm(x.hanja).includes(kw)||norm(x.kor).includes(kw));
+  const seen=new Set(); items=items.filter(x=>{const k=x.hanja+"|"+x.kor; if(seen.has(k))return false; seen.add(k); return true;});
+  const fontFor=L=> L<=2?29 : L===3?23 : L===4?18 : L===5?15 : 13;
+  const CHO=["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const isAll = (dkType==="전체");
+
+  const card=x=>`<div class="dk-card ${copyable?'copyable':''}" data-copy="${escAttr(x.kor)}" data-cho="${choseong(x.kor)}">
+        <div class="hanja" style="font-size:${fontFor(x.kor.length)}px">${x.hanja}</div><div class="kor">${x.kor}</div></div>`;
+
+  // 그룹핑: 전체=초성, 유형탭=글자수
+  const groups={}, order=[];
+  if(isAll){
+    items.sort((a,b)=> a.kor.localeCompare(b.kor,"ko"));
+    items.forEach(x=>{ const c=choseong(x.kor); if(!groups[c]){groups[c]=[];order.push(c);} groups[c].push(x); });
+  }else{
+    items.sort((a,b)=> a.kor.length-b.kor.length || a.kor.localeCompare(b.kor,"ko"));
+    items.forEach(x=>{ const L=x.kor.length; if(!groups[L]){groups[L]=[];order.push(L);} groups[L].push(x); });
+  }
+
+  // 초성 점프 바: 전체 탭에서만
+  if(isAll && items.length){
+    const present=new Set(items.map(x=>choseong(x.kor)));
+    $("#dkJump").style.display="flex";
+    $("#dkJump").innerHTML = CHO.filter(c=>present.has(c)).map(c=>`<span data-c="${c}">${c}</span>`).join("");
+  }else{
+    $("#dkJump").style.display="none"; $("#dkJump").innerHTML="";
+  }
+
+  const hint = copyable ? `<div style="text-align:right;font-size:11px;color:var(--muted);margin:0 2px 8px">카드를 눌러 복사</div>` : "";
+  if(!items.length){ $("#dkBody").innerHTML=hint+`<div class="dk-empty">해당하는 독음이 없어요.</div>`; return; }
+  $("#dkBody").innerHTML = hint + order.map(sec=>`
+    <div class="dk-sec">${isAll?sec:sec+"글자"}</div>
+    <div class="dk-grid">${groups[sec].map(card).join("")}</div>`).join("");
+}
+function dkBuildTabs(){
+  const items=dkList();
+  const counts={}; items.forEach(x=>counts[x.type]=(counts[x.type]||0)+1);
+  dkTypeList=["전체", ...Object.keys(counts).sort((a,b)=>counts[b]-counts[a])];
+  $("#dkTabs").innerHTML = dkTypeList.map(t=>{
+    const n = t==="전체" ? items.length : counts[t];
+    return `<button class="dk-tab ${t===dkType?'on':''}" data-t="${t}">${t} · ${n}</button>`;
+  }).join("");
+}
+async function openDokeum(){
+  if(!dkGame) return;
+  dkModal.hidden=false;
+  $("#dkTitle").textContent = `${dkGame} 빠른 독음 찾기`;
+  $("#dkq").value=""; dkType="전체";
+  if(!DOKEUM){
+    $("#dkTabs").innerHTML=""; $("#dkJump").innerHTML=""; $("#dkBody").innerHTML='<div class="dk-empty">불러오는 중…</div>';
+    try{ await dkEnsure(); }catch(e){ $("#dkBody").innerHTML='<div class="dk-empty">독음을 불러오지 못했어요.</div>'; return; }
+  }
+  dkBuildTabs(); dkRender();
+}
+function closeDokeum(){ dkModal.hidden=true; }
+$("#dokeum-open").addEventListener("click",openDokeum);
+$("#dkClose").addEventListener("click",closeDokeum);
+dkModal.addEventListener("click",e=>{ if(e.target===dkModal) closeDokeum(); });
+$("#dkq").addEventListener("input",dkRender);
+$("#dkTabs").addEventListener("click",e=>{ const b=e.target.closest(".dk-tab"); if(!b)return; dkType=b.dataset.t; dkBuildTabs(); dkRender(); });
+$("#dkJump").addEventListener("click",e=>{ const s=e.target.closest("span"); if(!s)return; const el=$(`#dkBody .dk-card[data-cho="${s.dataset.c}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); });
+$("#dkBody").addEventListener("click",e=>{ const c=e.target.closest(".dk-card.copyable"); if(!c)return; copyText(c.dataset.copy||"").then(()=>showToast("정답이 복사됐어요!")).catch(()=>{}); });
+
+// 게임 선택 시 독음 버튼 노출 (꽁꽁/올라올라만)
+function updateDokeumBar(){
+  const cat=$("#cat").value;
+  if(cat==="꽁꽁"||cat==="올라올라(꼬로록)"){ dkGame=cat; $("#dokeum-open").hidden=false; }
+  else { $("#dokeum-open").hidden=true; }
+}
+
 /* ── ESC: 팝업 닫기 / 검색어 지우기 ── */
 document.addEventListener("keydown",e=>{
   if(e.key!=="Escape") return;
+  if(!dkModal.hidden){ closeDokeum(); return; }
   if(!infoModal.hidden){ closeInfo(); return; }
   if(!modal.hidden){ closeModal(); return; }
   if($("#q").value){ $("#q").value=""; render(); }
@@ -513,7 +667,7 @@ $("#q").addEventListener("keydown",e=>{
 });
 $("#cat").addEventListener("mousedown",ensureLoaded);
 $("#cat").addEventListener("focus",ensureLoaded);
-$("#cat").addEventListener("change",()=>{ ensureLoaded(); render(); });
+$("#cat").addEventListener("change",()=>{ ensureLoaded(); updateDokeumBar(); render(); });
 $("#limit").addEventListener("change",render);
 $("#sort").addEventListener("change",render);
 $("#clear").addEventListener("click",()=>{ $("#q").value=""; $("#q").focus(); render(); });
