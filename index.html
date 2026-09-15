@@ -246,8 +246,9 @@
     <select id="cat"><option value="">게임 선택</option>
       <option value="올라올라(꼬로록)">올라올라(꼬로록)</option>
       <option value="꽁꽁">꽁꽁</option>
-      <option value="OX,XO">OX,XO</option>
-      <option value="가로세로">가로세로</option>
+      <option value="오엑스">오엑스</option>
+      <option value="가로,세로">가로,세로</option>
+      <option value="올라타자">올라타자</option>
     </select>
     <select id="limit">
       <option value="10">10건</option>
@@ -294,8 +295,9 @@
           <option value="" disabled selected>게임을 선택하세요</option>
           <option value="올라올라(꼬로록)">올라올라(꼬로록)</option>
           <option value="꽁꽁">꽁꽁</option>
-          <option value="OX,XO">OX,XO</option>
-          <option value="가로세로">가로세로</option>
+          <option value="오엑스">오엑스</option>
+          <option value="가로,세로">가로,세로</option>
+          <option value="올라타자">올라타자</option>
         </select></div>
         <div class="field"><label>문제</label><textarea id="f-question" placeholder="예: 세계에서 가장 높은 산은?"></textarea></div>
         <div class="field"><label>정답</label><input id="f-answer" type="text" placeholder="예: 에베레스트"></div>
@@ -378,8 +380,8 @@ const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
-/* 이 게임을 선택하면 검색 즉시 맨 위 정답이 자동 복사돼요 (꽁꽁=주관식) */
-const AUTOCOPY_GAME = "꽁꽁";
+/* 이 게임들을 선택하면 검색 즉시 맨 위 정답이 자동 복사돼요 (꽁꽁·올라타자=주관식) */
+const AUTOCOPY_GAMES = ["꽁꽁","올라타자"];
 
 /* ── CSV 파서 ── */
 function parseCSV(text){
@@ -454,7 +456,7 @@ function render(){
   else if(sort==="desc") rows.sort((a,b)=>b.q.localeCompare(a.q,"ko"));
   else                   rows.sort((a,b)=>a.q.localeCompare(b.q,"ko"));
   const total=rows.length; rows=rows.slice(0,limit);
-  const auto=(cat===AUTOCOPY_GAME);
+  const auto=AUTOCOPY_GAMES.includes(cat);
   if(!rows.length){
     $("#meta").innerHTML=`“${query}” 검색결과 <b>0</b>건`;
     $("#list").innerHTML=`<div class="empty"><b>결과가 없어요</b>다른 단어로 다시 검색해보세요.</div>`;return;
