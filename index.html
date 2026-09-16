@@ -248,7 +248,6 @@
       <option value="꽁꽁">꽁꽁</option>
       <option value="오엑스">오엑스</option>
       <option value="가로,세로">가로,세로</option>
-      <option value="올라타자">올라타자</option>
     </select>
     <select id="limit">
       <option value="10">10건</option>
@@ -297,7 +296,6 @@
           <option value="꽁꽁">꽁꽁</option>
           <option value="오엑스">오엑스</option>
           <option value="가로,세로">가로,세로</option>
-          <option value="올라타자">올라타자</option>
         </select></div>
         <div class="field"><label>문제</label><textarea id="f-question" placeholder="예: 세계에서 가장 높은 산은?"></textarea></div>
         <div class="field"><label>정답</label><input id="f-answer" type="text" placeholder="예: 에베레스트"></div>
@@ -380,8 +378,8 @@ const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
-/* 이 게임들을 선택하면 검색 즉시 맨 위 정답이 자동 복사돼요 (꽁꽁·올라타자=주관식) */
-const AUTOCOPY_GAMES = ["꽁꽁","올라타자"];
+/* 이 게임들을 선택하면 검색 즉시 맨 위 정답이 자동 복사돼요 (꽁꽁=주관식) */
+const AUTOCOPY_GAMES = ["꽁꽁"];
 
 /* ── CSV 파서 ── */
 function parseCSV(text){
@@ -401,7 +399,7 @@ function parseCSV(text){
 }
 function rowsToData(rows){
   return rows.slice(1)
-    .filter(r=>r.length>=3 && (r[1]||"").trim())
+    .filter(r=>r.length>=3 && (r[1]||"").trim() && (r[0]||"").trim()!=="올라타자")
     .map(r=>{
       const q=(r[1]||"").trim();
       return { cat:(r[0]||"기타").trim(), q, a:(r[2]||"").trim(), by:(r[3]||"").trim(), qn:norm(q) };
