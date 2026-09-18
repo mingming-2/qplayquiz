@@ -131,6 +131,12 @@
     margin-bottom:14px;font-size:13.5px;line-height:1.5;color:var(--text)}
   .notice svg{width:18px;height:18px;flex:0 0 auto;color:var(--buzz)}
   .notice b{color:var(--buzz);font-weight:800}
+  /* 팝업 창(작게 뜬 상태) 컴팩트 */
+  body.popmode{padding:12px 12px 24px}
+  body.popmode h1{font-size:16px}
+  body.popmode h1 span{font-size:11px}
+  body.popmode .notice{display:none}
+  body.popmode footer{display:none}
 
   .search{position:relative;margin-bottom:12px}
   .search input{width:100%;padding:16px 46px 16px 18px;font-size:16px;background:var(--surface);
@@ -223,6 +229,9 @@
     <h1>큐플레이 아카이브 웹족보<span>문제를 입력하면 정답을 찾아드려요</span></h1>
     <div class="hbtns">
       <span class="theme-wrap"><button class="hbtn" id="theme-btn" aria-label="테마" title="테마">🎨</button><div id="theme-menu" hidden></div></span>
+      <button class="hbtn" id="popbtn" aria-label="팝업으로 열기" title="팝업으로 열기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/></svg>
+      </button>
       <button class="hbtn" id="btn-guide" aria-label="사용법" title="사용법">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7"/><path d="M12 17h.01"/></svg><span>사용법</span>
       </button>
@@ -745,6 +754,17 @@ $("#theme-menu").addEventListener("click",e=>{
   $("#theme-menu").hidden=true;
 });
 document.addEventListener("click",()=>{ if(!$("#theme-menu").hidden) $("#theme-menu").hidden=true; });
+
+/* 팝업으로 열기 (작은 창으로 새로 열어 게임 옆에 두기) */
+if(new URLSearchParams(location.search).has("pop")){
+  document.body.classList.add("popmode");
+  const pb=$("#popbtn"); if(pb) pb.style.display="none";
+}
+$("#popbtn").addEventListener("click",()=>{
+  const w=460,h=680,left=(screen.width-w)-20,top=80;
+  const win=window.open(location.pathname+"?pop=1","qplay_popup","width="+w+",height="+h+",left="+left+",top="+top+",resizable=yes,scrollbars=yes");
+  if(!win) showToast("팝업이 차단됐어요. 브라우저에서 팝업 허용을 켜주세요.");
+});
 
 render();
 </script>
