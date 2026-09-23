@@ -383,7 +383,7 @@ const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyuaLVZjwwzJX9o
 const UPDATES_CSV_URL = "notice.csv";
 
 const $ = s => document.querySelector(s);
-const norm = s => s.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
+const norm = s => s.toLowerCase().replace(/æ/g,"ae").replace(/œ/g,"oe").replace(/[\s\p{P}\p{S}]+/gu,"");
 const esc  = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 const escAttr = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA = [];
