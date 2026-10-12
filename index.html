@@ -420,6 +420,18 @@ function allCharsIn(q, text){ // q의 모든 글자가 text에 있으면 true (�
   for(const ch of new Set(q)){ if(!text.includes(ch)) return false; }
   return true;
 }
+function chunkCover(q, text){ // q를 연속 덩어리로 분해 → 2글자↑ 덩어리 커버량과 최장 덩어리
+  let i=0, cov2=0, maxChunk=0;
+  while(i<q.length){
+    let len=0;
+    while(i+len<q.length && text.indexOf(q.slice(i,i+len+1))!==-1) len++;
+    if(len===0){ i++; continue; }        // 이 글자는 문제에 없음 → 건너뜀
+    if(len>=2) cov2+=len;                 // 2글자 이상 덩어리만 '의미있는 매칭'으로 인정
+    if(len>maxChunk) maxChunk=len;
+    i+=len;
+  }
+  return {cov2, maxChunk};
+}
 function score(tokens,qjoined,item){
   const qt=item.qn||norm(item.q);
   if(!tokens.length) return 0;
@@ -431,8 +443,11 @@ function score(tokens,qjoined,item){
     if(idx<first) first=idx;
   }
   if(allSub) return Math.max(40, 100-first);
-  // 2) 폴백: 검색어의 모든 글자가 문제에 있으면(순서 무관) 낮은 점수
-  if(qjoined.length>=3 && allCharsIn(qjoined, qt)) return 25;
+  // 2) 폴백: 2글자↑ 연속 덩어리가 검색어의 절반 이상을 덮을 때만 통과(흩어진 낱글자 제외)
+  if(qjoined.length>=3){
+    const {cov2, maxChunk} = chunkCover(qjoined, qt);
+    if(cov2*2 >= qjoined.length) return Math.min(39, 10 + maxChunk*4);
+  }
   return 0;
 }
 function highlight(text,query){
