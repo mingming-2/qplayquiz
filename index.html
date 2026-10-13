@@ -446,7 +446,7 @@ function score(tokens,qjoined,item){
   // 2) 폴백: 2글자↑ 연속 덩어리가 검색어의 절반 이상을 덮을 때만 통과(흩어진 낱글자 제외)
   if(qjoined.length>=3){
     const {cov2, maxChunk} = chunkCover(qjoined, qt);
-    if(cov2*2 >= qjoined.length) return Math.min(39, 10 + maxChunk*4);
+    if(cov2*2 > qjoined.length) return Math.min(39, 10 + maxChunk*4);
   }
   return 0;
 }
