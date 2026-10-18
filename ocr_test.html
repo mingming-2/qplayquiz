@@ -76,6 +76,11 @@
       <option>오엑스</option>
       <option>가로,세로</option>
     </select>
+    <select id="quality" title="속도↔정확도">
+      <option value="900">⚡ 빠름</option>
+      <option value="1300">보통</option>
+      <option value="1800">🎯 정확</option>
+    </select>
     <button id="btnShare" class="primary">▶ 실시간 검색 시작</button>
     <button id="btnPopup" title="게임 옆에 작은 창으로 열기">↗ 팝업</button>
   </div>
@@ -249,7 +254,9 @@ function stopAll(){
   btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
-const TARGET_W=1800;                 // 자른 영역을 이 폭 근처로(작으면 확대→선명도↑)
+let TARGET_W=+(localStorage.getItem("ocrQuality")||1300);  // 속도/정확도 (버튼으로 조절, 저장)
+(function initQuality(){const q=document.getElementById("quality");q.value=String(TARGET_W);
+  q.onchange=()=>{TARGET_W=+q.value;try{localStorage.setItem("ocrQuality",q.value);}catch(e){}};})();
 const DIFF_PX=24, DIFF_MIN=4;        // 샘플점이 24이상 바뀐 게 4개↑면 '화면 변함' → 글자 변화에 민감
 let lastSig=null;
 function makeSig(d,w,h){const cols=28,rows=10,s=new Array(cols*rows);
