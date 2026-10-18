@@ -13,82 +13,80 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--ink);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic","맑은 고딕",sans-serif;
-    padding:16px;max-width:900px;margin:0 auto;line-height:1.5}
-  h1{font-size:20px;margin:4px 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+    padding:14px;max-width:820px;margin:0 auto;line-height:1.5}
+  .top-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  h1{font-size:17px;margin:0;flex:1 1 auto}
   button{background:var(--surface-2);color:var(--text);border:1px solid var(--line);
-    border-radius:10px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer}
+    border-radius:10px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer}
   button.primary{background:var(--buzz);color:#101010;border-color:var(--buzz)}
+  button.stop{background:var(--hot);color:#fff;border-color:var(--hot)}
   button:disabled{opacity:.45;cursor:not-allowed}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   select{background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px}
-  #stage{position:relative;display:inline-block;max-width:100%;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#000}
-  #video{display:block;max-width:100%;height:auto}
-  #sel{position:absolute;border:2px dashed var(--buzz);background:rgba(198,241,53,.12);pointer-events:none;display:none}
-  .hint{color:var(--muted);font-size:13px}
-  .status{font-size:13px;color:var(--buzz);min-height:18px}
-  textarea{width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--line);
-    border-radius:10px;padding:10px;font-size:15px;resize:vertical;min-height:52px}
-  .label{font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:700;letter-spacing:.3px}
-  .res{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
-  .res .q{font-size:14px}
-  .res .a{margin-top:4px;font-size:15px;font-weight:700;color:#7db9ff}
-  .res .a b{color:var(--hot);font-size:11px;margin-right:6px;font-weight:700}
-  mark{background:rgba(198,241,53,.35);color:inherit;border-radius:3px;padding:0 1px}
-  .ok{color:var(--buzz)} .warn{color:var(--hot)}
+  .steps{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .steps b{color:var(--buzz)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#555;margin-right:5px;vertical-align:middle}
+  .dot.on{background:var(--buzz);box-shadow:0 0 8px var(--buzz);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  .status{font-size:12.5px;color:var(--muted)}
+  /* 결과 */
+  #results{min-height:120px}
+  .res{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:13px 15px;margin-bottom:9px}
+  .res.top{border-color:var(--buzz);box-shadow:0 0 0 1px var(--buzz)}
+  .res-main{flex:1 1 auto;min-width:0}
+  .res .q{font-size:13.5px;color:var(--text)}
+  .res .a{margin-top:6px;font-size:19px;font-weight:800;color:var(--hot)}
+  .res .a b{color:var(--muted);font-size:11px;margin-right:6px;font-weight:700;vertical-align:middle}
+  .res .cat{font-size:11px;color:var(--muted);margin-top:3px}
+  .pct{flex:0 0 auto;font-size:22px;font-weight:800;text-align:center;min-width:58px}
+  .pct small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+  .pct.hi{color:var(--buzz)} .pct.mid{color:#f0a91e} .pct.lo{color:var(--muted)}
+  mark{background:rgba(198,241,53,.3);color:inherit;border-radius:3px;padding:0 1px}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:30px 10px}
+  /* 하단 접이식 */
+  details{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  textarea{width:100%;margin-top:8px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;resize:vertical;min-height:46px}
+  #video{display:block;max-width:100%;height:auto;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:#000}
   .mini{font-size:12px;color:var(--muted)}
   canvas{display:none}
 </style>
 </head>
 <body>
-  <h1>📷 OCR 화면검색 테스트</h1>
-  <div class="sub">화면공유 → 문제 영역 드래그 → 자동 인식·검색. <b>PC 크롬/엣지 전용</b> · 이 페이지는 검색엔진에 노출 안 됨(테스트용).</div>
-
-  <div class="card">
-    <div class="row">
-      <button id="btnShare" class="primary">① 화면 공유 시작</button>
-      <select id="cat">
-        <option value="">전체 게임</option>
-        <option>올라올라(꼬로록)</option>
-        <option>꽁꽁</option>
-        <option>오엑스</option>
-        <option>가로,세로</option>
-      </select>
-      <label class="hint"><input type="checkbox" id="autoChk"> 자동 반복(2초마다)</label>
-    </div>
-    <div id="stageWrap" style="display:none">
-      <div class="hint" style="margin-top:8px">② 아래 화면에서 <b>문제가 뜨는 부분을 드래그</b>해서 영역을 지정하세요.</div>
-      <div id="stage">
-        <video id="video" autoplay playsinline muted></video>
-        <div id="sel"></div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button id="btnCap" class="primary" disabled>③ 📷 캡처 &amp; 검색</button>
-        <span id="status" class="status"></span>
-      </div>
-    </div>
-    <div id="loadMsg" class="hint" style="margin-top:8px"></div>
+  <div class="top-bar">
+    <h1>📷 OCR 화면검색 <span class="mini">(테스트)</span></h1>
+    <select id="cat">
+      <option value="">전체 게임</option>
+      <option>올라올라(꼬로록)</option>
+      <option>꽁꽁</option>
+      <option>오엑스</option>
+      <option>가로,세로</option>
+    </select>
+    <button id="btnShare" class="primary">▶ 실시간 검색 시작</button>
   </div>
-
-  <div class="card">
-    <div class="label">인식된 텍스트 (직접 고쳐서 다시 검색도 돼요)</div>
-    <textarea id="ocrText" placeholder="여기에 OCR 결과가 들어와요…"></textarea>
-    <div class="row" style="margin-top:8px">
-      <button id="btnSearch">🔍 이 텍스트로 검색</button>
-      <span id="ocrInfo" class="mini"></span>
-    </div>
+  <div class="steps">
+    PC <b>크롬</b> 권장 · 시작을 누르면 → <b>[창]</b> 탭 → <b>MapleStory Worlds</b> 선택.
+    공유되면 <b>자동으로 계속 인식</b>해서 아래에 정답을 보여줘요.
   </div>
+  <div style="margin-bottom:10px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
 
-  <div class="card">
-    <div class="label">검색 결과</div>
-    <div id="results"><span class="hint">아직 없음</span></div>
-  </div>
+  <!-- 결과 (메인) -->
+  <div id="results"><div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div></div>
+
+  <!-- 하단: 확인용 (안 중요) -->
+  <details id="prevWrap">
+    <summary>🔧 인식 텍스트 · 공유화면 (확인용 — 평소엔 안 봐도 됨)</summary>
+    <div class="mini" style="margin-top:8px" id="ocrInfo"></div>
+    <textarea id="ocrText" placeholder="OCR 원문…"></textarea>
+    <button id="btnSearch" style="font-size:13px;padding:8px 12px">이 텍스트로 다시 검색</button>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="mini" id="loadMsg" style="margin-top:6px"></div>
+  </details>
 
   <canvas id="cv"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-/* ===== 기존 족보 데이터 복호화 (index.html과 동일) ===== */
+/* ===== 족보 데이터 복호화 ===== */
 const DATA_URL="qdata.txt", DATA_KEY="qplay!2026#kkong";
 let DATA=[], dataReady=false;
 async function decodeData(){
@@ -108,112 +106,108 @@ function parseCSV(text){
 const norm=s=>s.toLowerCase().replace(/æ/g,"ae").replace(/œ/g,"oe").replace(/[\s\p{P}\p{S}]+/gu,"");
 function rowsToData(rows){
   return rows.slice(1).filter(r=>r.length>=3&&(r[1]||"").trim()&&(r[0]||"").trim()!=="올라타자")
-    .map(r=>{const q=(r[1]||"").trim();return {cat:(r[0]||"기타").trim(),q,a:(r[2]||"").trim(),qn:norm(q)};});
-}
-function allCharsIn(q,t){for(const ch of new Set(q))if(!t.includes(ch))return false;return true;}
-function chunkCover(q,text){let i=0,cov2=0,mx=0;const L=q.length;
-  while(i<L){let ln=0;while(i+ln<L&&text.indexOf(q.slice(i,i+ln+1))!==-1)ln++;
-    if(ln===0){i++;continue;}if(ln>=2)cov2+=ln;if(ln>mx)mx=ln;i+=ln;}return {cov2,maxChunk:mx};}
-function score(tokens,qjoined,item){
-  const qt=item.qn||norm(item.q); if(!tokens.length)return 0;
-  let allSub=true,first=Infinity;
-  for(const t of tokens){const idx=qt.indexOf(t);if(idx===-1){allSub=false;break;}if(idx<first)first=idx;}
-  if(allSub)return Math.max(40,100-first);
-  if(qjoined.length>=3){const {cov2,maxChunk}=chunkCover(qjoined,qt);
-    if(cov2*3>qjoined.length*2)return Math.min(39,8+cov2*3+maxChunk*2);}
-  return 0;
+    .map(r=>{const q=(r[1]||"").trim();return {cat:(r[0]||"기타").trim(),q,a:(r[2]||"").trim()};});
 }
 function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
-function hl(text,query){const t=query.trim().split(/\s+/).filter(Boolean);if(!t.length)return text;
+function hl(text,query){const t=(query||"").split(/[\s]+|[^\w가-힣]+/u).filter(w=>norm(w).length>=2);if(!t.length)return text;
   try{return text.replace(new RegExp("("+t.map(esc).join("|")+")","gi"),"<mark>$1</mark>");}catch(e){return text;}}
-function runSearch(query){
+
+/* ===== 역방향 리콜 검색 (유사도 %) ===== */
+function ocrWords(q){const out=[];for(const p of q.split(/[\s]+|[^\w가-힣]+/u)){const n=norm(p);if(n.length>=2)out.push(n);}return out;}
+let lastKey="";
+function ocrSearch(ocrRaw){
   const box=document.getElementById("results");
-  if(!dataReady){box.innerHTML='<span class="hint">데이터 불러오는 중…</span>';return;}
+  if(!dataReady){return;}
+  const ocrN=norm(ocrRaw);
+  if(ocrN.length<4){return;}
   const cat=document.getElementById("cat").value;
-  const q=query.trim(); if(!q){box.innerHTML='<span class="hint">검색어 없음</span>';return;}
-  let rows=DATA.filter(d=>!cat||d.cat===cat);
-  const tokens=q.split(/\s+/).map(norm).filter(Boolean); const qj=tokens.join("");
-  rows=rows.map(d=>({...d,s:score(tokens,qj,d)})).filter(d=>d.s>0).sort((a,b)=>b.s-a.s).slice(0,10);
-  if(!rows.length){box.innerHTML='<span class="warn">일치하는 문제 없음 — OCR 글자가 많이 틀렸을 수 있어요.</span>';return;}
-  box.innerHTML=rows.map(d=>`<div class="res"><div class="q">${hl(d.q,q)}</div>
-    <div class="a"><b>정답</b>${d.a||"-"}</div><div class="mini">${d.cat} · 점수 ${d.s}</div></div>`).join("");
+  const best=[];
+  for(const d of DATA){
+    if(cat&&d.cat!==cat) continue;
+    const w=d._w||(d._w=ocrWords(d.q)); if(w.length<2) continue;
+    let matched=0,cov=0,total=0;
+    for(const x of w){ total+=x.length; if(ocrN.includes(x)){matched++;cov+=x.length;} }
+    if(matched<2||total===0) continue;
+    const pct=cov/total; if(pct<0.4) continue;
+    best.push({...d,pct,matched});
+  }
+  best.sort((a,b)=>b.pct-a.pct||b.matched-a.matched);
+  const top=best.slice(0,4);
+  if(!top.length){ if(lastKey!=="none"){box.innerHTML='<div class="empty">아직 일치하는 문제 없음 — 문제가 화면에 떠 있을 때 잡혀요.</div>';lastKey="none";} return; }
+  const key=top.map(d=>d.q).join("|");
+  if(key===lastKey) return;   // 같은 결과면 다시 안 그림(깜빡임 방지)
+  lastKey=key;
+  box.innerHTML=top.map((d,i)=>{
+    const p=Math.round(d.pct*100), cls=p>=80?"hi":p>=55?"mid":"lo";
+    return `<div class="res${i===0?' top':''}">
+      <div class="res-main">
+        <div class="q">${hl(d.q,ocrRaw)}</div>
+        <div class="a"><b>정답</b>${d.a||"-"}</div>
+        <div class="cat">${d.cat}</div>
+      </div>
+      <div class="pct ${cls}">${p}%<small>유사도</small></div>
+    </div>`;}).join("");
 }
+/* 손으로 친 재검색도 같은 엔진 사용 */
+document.getElementById("btnSearch").onclick=()=>{lastKey="";ocrSearch(document.getElementById("ocrText").value);};
 
-/* ===== 화면공유 + 영역 지정 ===== */
-let stream=null, selRect=null, autoTimer=null;
-const video=document.getElementById("video"), sel=document.getElementById("sel"), stage=document.getElementById("stage");
-document.getElementById("btnShare").onclick=async()=>{
-  try{
-    stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});
-    video.srcObject=stream; document.getElementById("stageWrap").style.display="block";
-    stream.getVideoTracks()[0].onended=()=>{document.getElementById("btnCap").disabled=true;setStatus("화면공유 종료됨");};
-    setStatus("화면공유 시작됨 · 문제 영역을 드래그하세요");
-  }catch(e){ setStatus("화면공유 취소/실패: "+e.message,true); }
-};
-/* 드래그로 영역 선택 */
-let dragging=false,sx0,sy0;
-stage.addEventListener("mousedown",e=>{const r=stage.getBoundingClientRect();dragging=true;sx0=e.clientX-r.left;sy0=e.clientY-r.top;
-  sel.style.display="block";sel.style.left=sx0+"px";sel.style.top=sy0+"px";sel.style.width="0px";sel.style.height="0px";});
-stage.addEventListener("mousemove",e=>{if(!dragging)return;const r=stage.getBoundingClientRect();
-  const x=e.clientX-r.left,y=e.clientY-r.top;const l=Math.min(x,sx0),t=Math.min(y,sy0),w=Math.abs(x-sx0),h=Math.abs(y-sy0);
-  sel.style.left=l+"px";sel.style.top=t+"px";sel.style.width=w+"px";sel.style.height=h+"px";});
-window.addEventListener("mouseup",e=>{if(!dragging)return;dragging=false;
-  const dispW=video.clientWidth,dispH=video.clientHeight,vw=video.videoWidth,vh=video.videoHeight;
-  if(!vw||!dispW){return;}
-  const l=parseFloat(sel.style.left),t=parseFloat(sel.style.top),w=parseFloat(sel.style.width),h=parseFloat(sel.style.height);
-  if(w<8||h<8){sel.style.display="none";selRect=null;document.getElementById("btnCap").disabled=true;return;}
-  const kx=vw/dispW,ky=vh/dispH;
-  selRect={x:Math.round(l*kx),y:Math.round(t*ky),w:Math.round(w*kx),h:Math.round(h*ky)};
-  document.getElementById("btnCap").disabled=false;
-  setStatus("영역 지정됨 ("+selRect.w+"×"+selRect.h+") · 캡처 & 검색을 누르세요");
-});
-
-/* ===== 캡처 → OCR ===== */
-let worker=null, workerReady=false;
+/* ===== 화면 공유 + 실시간 루프 ===== */
+let stream=null, running=false, worker=null, workerReady=false;
+const video=document.getElementById("video"), btnShare=document.getElementById("btnShare");
 async function ensureWorker(){
   if(workerReady)return;
-  setLoad("OCR 엔진 로딩 중… (처음 한 번만, 10여 MB 다운로드)");
+  setStatus("OCR 엔진 로딩 중… (처음 한 번, 10여 MB)");
   worker=await Tesseract.createWorker(["kor","eng"]);
-  workerReady=true; setLoad("");
+  workerReady=true;
 }
-async function capture(){
-  if(!selRect){setStatus("먼저 영역을 지정하세요",true);return;}
-  setStatus("캡처 중…");
-  const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-  const scale=2; // 업스케일로 인식률 향상
-  cv.width=selRect.w*scale; cv.height=selRect.h*scale;
-  ctx.imageSmoothingEnabled=true;
-  ctx.drawImage(video,selRect.x,selRect.y,selRect.w,selRect.h,0,0,cv.width,cv.height);
-  // 간단 전처리: 그레이스케일 + 대비
-  const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
-  for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=g>140?255:(g<90?0:g);d[i]=d[i+1]=d[i+2]=g;}
-  ctx.putImageData(img,0,0);
-  await ensureWorker();
-  setStatus("인식 중…");
-  const t0=performance.now();
-  const {data}=await worker.recognize(cv);
-  const ms=Math.round(performance.now()-t0);
-  const text=(data.text||"").replace(/\s+/g," ").trim();
-  document.getElementById("ocrText").value=text;
-  document.getElementById("ocrInfo").textContent=`신뢰도 ${Math.round(data.confidence)}% · ${ms}ms`;
-  setStatus("인식 완료 · 검색함");
-  runSearch(text);
-}
-document.getElementById("btnCap").onclick=capture;
-document.getElementById("btnSearch").onclick=()=>runSearch(document.getElementById("ocrText").value);
-document.getElementById("autoChk").onchange=e=>{
-  if(e.target.checked){autoTimer=setInterval(()=>{if(selRect&&!dragging)capture();},2000);setStatus("자동 반복 ON");}
-  else{clearInterval(autoTimer);setStatus("자동 반복 OFF");}
+btnShare.onclick=async()=>{
+  if(running){ stopAll(); return; }
+  try{
+    stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});
+    video.srcObject=stream;
+    stream.getVideoTracks()[0].onended=()=>stopAll();
+    await ensureWorker();
+    running=true; btnShare.textContent="■ 중지"; btnShare.className="stop";
+    setDot(true); setStatus("실시간 인식 중…");
+    loop();
+  }catch(e){ setStatus("화면공유 취소/실패: "+e.message); }
 };
-function setStatus(s,warn){const el=document.getElementById("status");el.textContent=s;el.className="status "+(warn?"warn":"ok");}
-function setLoad(s){document.getElementById("loadMsg").textContent=s;}
+function stopAll(){
+  running=false; setDot(false); setStatus("중지됨");
+  btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+}
+async function loop(){
+  while(running){
+    if(video.videoWidth){
+      try{
+        const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+        cv.width=video.videoWidth; cv.height=video.videoHeight;
+        ctx.drawImage(video,0,0,cv.width,cv.height);
+        const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
+        for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=(g-128)*1.25+128;g=g<0?0:g>255?255:g;d[i]=d[i+1]=d[i+2]=g;}
+        ctx.putImageData(img,0,0);
+        const t0=performance.now();
+        const {data}=await worker.recognize(cv);
+        const ms=Math.round(performance.now()-t0);
+        const text=(data.text||"").replace(/\s+/g," ").trim();
+        document.getElementById("ocrText").value=text;
+        document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms`;
+        ocrSearch(text);
+      }catch(e){ /* 한 프레임 실패는 무시하고 계속 */ }
+    }
+    await new Promise(r=>setTimeout(r,200)); // 프레임 간 짧은 쉼
+  }
+}
+function setStatus(s){document.getElementById("status").textContent=s;}
+function setDot(on){document.getElementById("dot").className="dot"+(on?" on":"");}
 
 /* ===== 데이터 로드 ===== */
 (async()=>{
   try{ DATA=rowsToData(parseCSV(await decodeData())); dataReady=true;
-    setLoad("족보 데이터 로드 완료: "+DATA.length.toLocaleString()+"문제");
-    setTimeout(()=>setLoad(""),2500);
-  }catch(e){ setLoad("데이터 로드 실패: "+e.message+" (이 페이지를 qplayquiz 저장소에 올려야 qdata.txt를 읽어요)"); }
+    document.getElementById("loadMsg").textContent="족보 데이터 로드 완료: "+DATA.length.toLocaleString()+"문제";
+  }catch(e){ document.getElementById("loadMsg").textContent="데이터 로드 실패: "+e.message+" (qplayquiz 저장소에 올려야 qdata.txt를 읽어요)";
+    setStatus("데이터 로드 실패 — 저장소에 올려서 열어주세요"); }
 })();
 </script>
 </body>
