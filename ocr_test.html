@@ -36,7 +36,7 @@
   .res .q{font-size:13px;color:var(--text);line-height:1.35}
   .res .a{margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
   .alabel{color:var(--muted);font-size:10.5px;font-weight:700}
-  .ans{background:var(--buzz);color:#101010;font-weight:800;font-size:17px;padding:2px 10px;border-radius:6px}
+  .ans{color:var(--buzz);font-weight:800;font-size:18px}
   .catTag{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
   .pct{flex:0 0 auto;font-size:21px;font-weight:800;text-align:center;min-width:54px}
   .pct small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
@@ -124,12 +124,14 @@ function hl(text,query){const t=(query||"").split(/[\s]+|[^\w가-힣]+/u).filter
 function ocrWords(q){const out=[];for(const p of q.split(/[\s]+|[^\w가-힣]+/u)){const n=norm(p);if(n.length>=2)out.push(n);}return out;}
 function extractQuestion(raw){
   let t=raw||"";
+  t=t.replace(/[출축]\s*제\s*자\s*[:：]?\s*(큐\s*플\s*레\s*이|기\s*합)?/g," "); // '출제자 : XXX' 라벨 제거
   const cut=t.search(/\[?\s*(정\s*답|설\s*명)\s*\]?/); if(cut>=0) t=t.slice(0,cut);
   const m=t.search(/\[?\s*문\s*제\s*\]?/); if(m>=0) t=t.slice(m).replace(/\[?\s*문\s*제\s*\]?/,"");
   return t.trim();
 }
 const MACROS=[
-  {test:t=>t.includes("이미지속한글")||(t.includes("이미지")&&t.includes("한글")), msg:"이미지 속 한글을 직접 읽어서 입력하세요"},
+  // OCR 오타 견딤: '한글' + ('추방'=오답시 추방 / '이미지'/'미미지')
+  {test:t=>t.includes("한글")&&(t.includes("추방")||t.includes("이미지")||t.includes("미미지")), msg:"이미지 속 한글을 직접 읽어서 입력하세요"},
 ];
 function macroHit(ocrN){ for(const m of MACROS){ if(m.test(ocrN)) return m; } return null; }
 
@@ -203,7 +205,8 @@ async function ensureWorker(){
   if(workerReady)return;
   setStatus("OCR 엔진 로딩 중… (처음 한 번, 10여 MB)");
   worker=await Tesseract.createWorker(["kor","eng"]);
-  try{ await worker.setParameters({ tessedit_pageseg_mode:"6" }); }catch(e){}
+  // 레이아웃 자동 분석(기본 PSM 3): '출제자' 라벨과 질문 줄을 섞지 않고 각 줄로 인식 → 정확도↑
+  try{ await worker.setParameters({ tessedit_pageseg_mode:"3" }); }catch(e){}
   workerReady=true;
 }
 btnShare.onclick=async()=>{
@@ -224,11 +227,12 @@ function stopAll(){
   btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
-const TARGET_W=1400, CHANGE_THRESH=6;   // 자른 영역을 이 폭 근처로 맞춰 인식(작으면 확대→선명도↑)
+const TARGET_W=1400;                 // 자른 영역을 이 폭 근처로(작으면 확대→선명도↑)
+const DIFF_PX=24, DIFF_MIN=4;        // 샘플점이 24이상 바뀐 게 4개↑면 '화면 변함' → 글자 변화에 민감
 let lastSig=null;
-function makeSig(d,w,h){const cols=24,rows=8,s=new Array(cols*rows);
+function makeSig(d,w,h){const cols=28,rows=10,s=new Array(cols*rows);
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=((c+0.5)/cols*w)|0,y=((r+0.5)/rows*h)|0;s[r*cols+c]=d[(y*w+x)*4];}return s;}
-function sigDiff(a,b){if(!a||!b)return 1e9;let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return s/a.length;}
+function sigChanged(a,b){if(!a||!b)return true;let n=0;for(let i=0;i<a.length;i++)if(Math.abs(a[i]-b[i])>DIFF_PX)n++;return n>=DIFF_MIN;}
 async function loop(){
   while(running){
     if(video.videoWidth){
