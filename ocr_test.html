@@ -57,7 +57,7 @@
   .mini{font-size:12px;color:var(--muted)}
   .res{position:relative}
   .res.copyable{cursor:pointer}
-  .copybtn{position:absolute;right:9px;bottom:7px;color:var(--muted);line-height:0;display:flex}
+  .copybtn{position:absolute;right:9px;top:7px;color:var(--muted);line-height:0;display:flex}
   .res.copyable:hover .copybtn{color:var(--buzz)}
   #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--buzz);color:#101010;font-weight:800;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50;max-width:90%}
   #toast.show{opacity:1}
@@ -160,19 +160,19 @@ const MACROS=[
 function macroHit(ocrN){ for(const m of MACROS){ if(m.test(ocrN)) return m; } return null; }
 
 let lastKey="", haveGood=false, lastTop=[], goodOcrN="";
-/* 정답 복사 — 꽁꽁 카드 클릭 시 */
-function tryCopy(text){
+/* 정답 복사 — 꽁꽁 자동복사(포커스 있을 때) + 카드 클릭 */
+function tryCopy(text,auto){
   if(!text) return;
   try{ navigator.clipboard.writeText(text)
-    .then(()=>toast("복사됨: "+text))
-    .catch(()=>toast("복사하려면 이 창을 한 번 클릭 후 다시")); }
-  catch(e){ toast("복사 미지원 브라우저"); }
+    .then(()=>toast((auto?"자동복사: ":"복사됨: ")+text))
+    .catch(()=>{ if(!auto) toast("복사하려면 이 창을 한 번 클릭 후 다시"); }); }
+  catch(e){ if(!auto) toast("복사 미지원 브라우저"); }
 }
 let toastT=null;
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1400);}
 document.getElementById("results").addEventListener("click",e=>{
   const el=e.target.closest(".res.copyable"); if(!el) return;
-  const i=+el.dataset.i; if(lastTop[i]) tryCopy(lastTop[i].a);
+  const i=+el.dataset.i; if(lastTop[i]) tryCopy(lastTop[i].a,false);
 });
 /* 두 OCR 텍스트가 같은 문제인지(스크롤 등) 대략 판단 */
 function textSim(a,b){ if(!a||!b)return 0; const g=new Set();
@@ -226,6 +226,7 @@ function ocrSearch(raw){
       <div class="res-main"><div class="q">${hl(d.q,raw)}</div>
         <div class="a"><span class="alabel">정답</span><span class="ans">${d.a||"-"}</span>${showCat?`<span class="catTag">${d.cat}</span>`:""}</div></div>
       <div class="pct ${cls}">${p}%<small>유사도</small></div>${copyIco}</div>`;}).join("");
+  if(strong && top[0].cat==="꽁꽁") tryCopy(top[0].a,true);   // 꽁꽁 자동복사(포커스 있을 때)
 }
 document.getElementById("btnSearch").onclick=()=>{lastKey="";ocrSearch(extractQuestion(document.getElementById("ocrText").value));};
 
