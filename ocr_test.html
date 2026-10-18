@@ -43,6 +43,10 @@
   .pct.hi{color:var(--buzz)} .pct.mid{color:#f0a91e} .pct.lo{color:var(--muted)}
   mark{background:rgba(198,241,53,.3);color:inherit;border-radius:3px;padding:0 1px}
   .empty{color:var(--muted);font-size:14px;text-align:center;padding:30px 10px}
+  .macro{background:rgba(240,169,30,.14);border:2px solid #f0a91e;border-radius:var(--radius);
+    padding:16px;text-align:center;margin-bottom:9px}
+  .macro-title{font-size:21px;font-weight:800;color:#f0a91e}
+  .macro-sub{font-size:13.5px;color:var(--text);margin-top:6px}
   /* 하단 접이식 */
   details{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
   summary{cursor:pointer;color:var(--muted);font-size:13px}
@@ -114,12 +118,23 @@ function hl(text,query){const t=(query||"").split(/[\s]+|[^\w가-힣]+/u).filter
 
 /* ===== 역방향 리콜 검색 (유사도 %) ===== */
 function ocrWords(q){const out=[];for(const p of q.split(/[\s]+|[^\w가-힣]+/u)){const n=norm(p);if(n.length>=2)out.push(n);}return out;}
+
+/* 족보로 못 푸는 매크로(이미지) 문제 — 감지되면 경고 배너. 필요하면 여기에 추가 */
+const MACROS=[
+  {test:t=>t.includes("이미지속한글")||(t.includes("이미지")&&t.includes("한글")), msg:"이미지 속 한글을 직접 읽어서 입력하세요"},
+];
+function macroHit(ocrN){ for(const m of MACROS){ if(m.test(ocrN)) return m; } return null; }
+
 let lastKey="";
 function ocrSearch(ocrRaw){
   const box=document.getElementById("results");
   if(!dataReady){return;}
   const ocrN=norm(ocrRaw);
   if(ocrN.length<4){return;}
+  const mh=macroHit(ocrN);
+  if(mh){ if(lastKey!=="macro"){ lastKey="macro";
+      box.innerHTML=`<div class="macro"><div class="macro-title">⭐⭐⭐ 매크로 문제입니다! ⭐⭐⭐</div><div class="macro-sub">${mh.msg} · 족보에 정답이 없어요</div></div>`;
+    } return; }
   const cat=document.getElementById("cat").value;
   const best=[];
   for(const d of DATA){
