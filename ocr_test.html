@@ -119,6 +119,16 @@ function hl(text,query){const t=(query||"").split(/[\s]+|[^\w가-힣]+/u).filter
 /* ===== 역방향 리콜 검색 (유사도 %) ===== */
 function ocrWords(q){const out=[];for(const p of q.split(/[\s]+|[^\w가-힣]+/u)){const n=norm(p);if(n.length>=2)out.push(n);}return out;}
 
+/* OCR 원문에서 '[문제] ~ [정답]/[설명] 전'까지만 뽑기 (답·설명은 검색에 불필요) */
+function extractQuestion(raw){
+  let t=raw||"";
+  const cut=t.search(/\[?\s*(정\s*답|설\s*명)\s*\]?/);   // [정답]/[설명] 이후 버림
+  if(cut>=0) t=t.slice(0,cut);
+  const m=t.search(/\[?\s*문\s*제\s*\]?/);                // [문제] 라벨 이후만
+  if(m>=0) t=t.slice(m).replace(/\[?\s*문\s*제\s*\]?/,"");
+  return t.trim();
+}
+
 /* 족보로 못 푸는 매크로(이미지) 문제 — 감지되면 경고 배너. 필요하면 여기에 추가 */
 const MACROS=[
   {test:t=>t.includes("이미지속한글")||(t.includes("이미지")&&t.includes("한글")), msg:"이미지 속 한글을 직접 읽어서 입력하세요"},
@@ -164,7 +174,7 @@ function ocrSearch(ocrRaw){
     </div>`;}).join("");
 }
 /* 손으로 친 재검색도 같은 엔진 사용 */
-document.getElementById("btnSearch").onclick=()=>{lastKey="";ocrSearch(document.getElementById("ocrText").value);};
+document.getElementById("btnSearch").onclick=()=>{lastKey="";ocrSearch(extractQuestion(document.getElementById("ocrText").value));};
 
 /* ===== 화면 공유 + 실시간 루프 ===== */
 let stream=null, running=false, worker=null, workerReady=false;
@@ -192,30 +202,42 @@ function stopAll(){
   btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
-const TOP_FRAC=0.5;    // 화면 위쪽 절반만 인식(문제는 상단에 뜸 → 속도↑·노이즈↓)
-const MAX_W=1280;      // 이 폭보다 크면 줄여서 인식(속도↑)
+const TOP_SKIP=0.06;    // 맨 위(창 제목표시줄) 제외
+const TOP_FRAC=0.42;    // 문제 박스가 뜨는 상단 띠만 인식(속도↑·노이즈↓)
+const MAX_W=1200;       // 이 폭보다 크면 줄여서 인식(속도↑)
+const CHANGE_THRESH=6;  // 화면 변화 감지 민감도(작을수록 민감). 배경 애니는 무시, 문제 바뀌면 감지
+let lastSig=null;
+function makeSig(d,w,h){const cols=24,rows=8,s=new Array(cols*rows);
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=((c+0.5)/cols*w)|0,y=((r+0.5)/rows*h)|0;s[r*cols+c]=d[(y*w+x)*4];}return s;}
+function sigDiff(a,b){if(!a||!b)return 1e9;let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return s/a.length;}
 async function loop(){
   while(running){
     if(video.videoWidth){
       try{
         const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-        const vw=video.videoWidth, cropH=Math.round(video.videoHeight*TOP_FRAC);
+        const vw=video.videoWidth, vh=video.videoHeight;
+        const sy=Math.round(vh*TOP_SKIP), cropH=Math.round(vh*(TOP_FRAC-TOP_SKIP));
         const sc=vw>MAX_W?MAX_W/vw:1;
         cv.width=Math.round(vw*sc); cv.height=Math.round(cropH*sc);
-        ctx.drawImage(video, 0,0, vw,cropH, 0,0, cv.width,cv.height);
+        ctx.drawImage(video, 0,sy, vw,cropH, 0,0, cv.width,cv.height);
         const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
         for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=(g-128)*1.25+128;g=g<0?0:g>255?255:g;d[i]=d[i+1]=d[i+2]=g;}
+        // 화면이 거의 안 바뀌었으면 OCR 건너뜀 (같은 문제 유지 중)
+        const sig=makeSig(d,cv.width,cv.height);
+        if(sigDiff(sig,lastSig)<CHANGE_THRESH){ await new Promise(r=>setTimeout(r,120)); continue; }
+        lastSig=sig;
         ctx.putImageData(img,0,0);
         const t0=performance.now();
         const {data}=await worker.recognize(cv);
         const ms=Math.round(performance.now()-t0);
         const text=(data.text||"").replace(/\s+/g," ").trim();
+        const qtext=extractQuestion(text);   // [문제] 부분만
         document.getElementById("ocrText").value=text;
-        document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms`;
-        ocrSearch(text);
+        document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms · 문제추출: ${qtext.slice(0,40)}`;
+        ocrSearch(qtext);
       }catch(e){ /* 한 프레임 실패는 무시하고 계속 */ }
     }
-    await new Promise(r=>setTimeout(r,120));
+    await new Promise(r=>setTimeout(r,100));
   }
 }
 function setStatus(s){document.getElementById("status").textContent=s;}
