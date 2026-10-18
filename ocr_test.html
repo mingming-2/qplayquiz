@@ -28,30 +28,32 @@
   .dot.on{background:var(--buzz);box-shadow:0 0 8px var(--buzz);animation:pulse 1s infinite}
   @keyframes pulse{50%{opacity:.4}}
   .status{font-size:12.5px;color:var(--muted)}
-  /* 결과 */
-  #results{min-height:120px}
-  .res{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
-    border-radius:var(--radius);padding:13px 15px;margin-bottom:9px}
+  #results{min-height:100px}
+  .res{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);
+    border-radius:11px;padding:9px 12px;margin-bottom:6px}
   .res.top{border-color:var(--buzz);box-shadow:0 0 0 1px var(--buzz)}
   .res-main{flex:1 1 auto;min-width:0}
-  .res .q{font-size:13.5px;color:var(--text)}
-  .res .a{margin-top:6px;font-size:19px;font-weight:800;color:var(--hot)}
-  .res .a b{color:var(--muted);font-size:11px;margin-right:6px;font-weight:700;vertical-align:middle}
-  .res .cat{font-size:11px;color:var(--muted);margin-top:3px}
-  .pct{flex:0 0 auto;font-size:22px;font-weight:800;text-align:center;min-width:58px}
+  .res .q{font-size:13px;color:var(--text);line-height:1.35}
+  .res .a{margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .alabel{color:var(--muted);font-size:10.5px;font-weight:700}
+  .ans{background:var(--buzz);color:#101010;font-weight:800;font-size:17px;padding:2px 10px;border-radius:6px}
+  .catTag{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .pct{flex:0 0 auto;font-size:21px;font-weight:800;text-align:center;min-width:54px}
   .pct small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
   .pct.hi{color:var(--buzz)} .pct.mid{color:#f0a91e} .pct.lo{color:var(--muted)}
   mark{background:rgba(198,241,53,.3);color:inherit;border-radius:3px;padding:0 1px}
   .empty{color:var(--muted);font-size:14px;text-align:center;padding:30px 10px}
-  .macro{background:rgba(240,169,30,.14);border:2px solid #f0a91e;border-radius:var(--radius);
-    padding:16px;text-align:center;margin-bottom:9px}
+  .macro{background:rgba(240,169,30,.14);border:2px solid #f0a91e;border-radius:var(--radius);padding:16px;text-align:center;margin-bottom:9px}
   .macro-title{font-size:21px;font-weight:800;color:#f0a91e}
   .macro-sub{font-size:13.5px;color:var(--text);margin-top:6px}
-  /* 하단 접이식 */
   details{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
   summary{cursor:pointer;color:var(--muted);font-size:13px}
   textarea{width:100%;margin-top:8px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;resize:vertical;min-height:46px}
-  #video{display:block;max-width:100%;height:auto;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:#000}
+  #videoWrap{position:relative;display:inline-block;max-width:100%;margin-top:8px;line-height:0;user-select:none}
+  #video{display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#000}
+  #ocrZone{position:absolute;border:2px solid var(--buzz);background:rgba(198,241,53,.12);box-sizing:border-box;cursor:move}
+  .zlabel{position:absolute;top:0;left:0;background:var(--buzz);color:#101010;font-size:10px;font-weight:800;padding:1px 6px;border-radius:7px 0 6px 0;white-space:nowrap;line-height:1.3;pointer-events:none}
+  .zhandle{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:var(--buzz);border:2px solid #101010;border-radius:3px;cursor:nwse-resize}
   .mini{font-size:12px;color:var(--muted)}
   canvas{display:none}
 </style>
@@ -69,21 +71,23 @@
     <button id="btnShare" class="primary">▶ 실시간 검색 시작</button>
   </div>
   <div class="steps">
-    PC <b>크롬</b> 권장 · 시작을 누르면 → <b>[창]</b> 탭 → <b>MapleStory Worlds</b> 선택.
-    공유되면 <b>자동으로 계속 인식</b>해서 아래에 정답을 보여줘요.
+    PC <b>크롬</b> 권장 · 시작 → <b>[창]</b> → <b>MapleStory Worlds</b> 선택.
+    아래 미리보기에서 <b>형광 박스를 파란 문제창에 맞게</b> 한 번 드래그(모서리로 크기조절)하면 기억해요.
   </div>
   <div style="margin-bottom:10px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
 
   <!-- 결과 (메인) -->
   <div id="results"><div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div></div>
 
-  <!-- 하단: 확인용 (안 중요) -->
-  <details id="prevWrap">
-    <summary>🔧 인식 텍스트 · 공유화면 (확인용 — 평소엔 안 봐도 됨)</summary>
-    <div class="mini" style="margin-top:8px" id="ocrInfo"></div>
+  <!-- 하단: 영역 조절 + 확인용 -->
+  <details id="prevWrap" open>
+    <summary>🖥️ 공유화면 · 인식 영역 조절</summary>
+    <div class="mini" style="margin-top:8px">형광 박스 안쪽만 인식해요. <b>파란 문제 박스에 딱 맞게</b> 드래그/크기조절 하세요. (자동 저장)</div>
+    <div id="videoWrap"><video id="video" autoplay playsinline muted></video><div id="ocrZone"><span class="zlabel">📷 문제 영역</span><div class="zhandle"></div></div></div>
+    <div class="mini" id="ocrInfo" style="margin-top:6px"></div>
     <textarea id="ocrText" placeholder="OCR 원문…"></textarea>
     <button id="btnSearch" style="font-size:13px;padding:8px 12px">이 텍스트로 다시 검색</button>
-    <video id="video" autoplay playsinline muted></video>
+    <button id="btnReset" style="font-size:13px;padding:8px 12px">영역 초기화</button>
     <div class="mini" id="loadMsg" style="margin-top:6px"></div>
   </details>
 
@@ -116,31 +120,25 @@ function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
 function hl(text,query){const t=(query||"").split(/[\s]+|[^\w가-힣]+/u).filter(w=>norm(w).length>=2);if(!t.length)return text;
   try{return text.replace(new RegExp("("+t.map(esc).join("|")+")","gi"),"<mark>$1</mark>");}catch(e){return text;}}
 
-/* ===== 역방향 리콜 검색 (유사도 %) ===== */
+/* ===== 검색 ===== */
 function ocrWords(q){const out=[];for(const p of q.split(/[\s]+|[^\w가-힣]+/u)){const n=norm(p);if(n.length>=2)out.push(n);}return out;}
-
-/* OCR 원문에서 '[문제] ~ [정답]/[설명] 전'까지만 뽑기 (답·설명은 검색에 불필요) */
 function extractQuestion(raw){
   let t=raw||"";
-  const cut=t.search(/\[?\s*(정\s*답|설\s*명)\s*\]?/);   // [정답]/[설명] 이후 버림
-  if(cut>=0) t=t.slice(0,cut);
-  const m=t.search(/\[?\s*문\s*제\s*\]?/);                // [문제] 라벨 이후만
-  if(m>=0) t=t.slice(m).replace(/\[?\s*문\s*제\s*\]?/,"");
+  const cut=t.search(/\[?\s*(정\s*답|설\s*명)\s*\]?/); if(cut>=0) t=t.slice(0,cut);
+  const m=t.search(/\[?\s*문\s*제\s*\]?/); if(m>=0) t=t.slice(m).replace(/\[?\s*문\s*제\s*\]?/,"");
   return t.trim();
 }
-
-/* 족보로 못 푸는 매크로(이미지) 문제 — 감지되면 경고 배너. 필요하면 여기에 추가 */
 const MACROS=[
   {test:t=>t.includes("이미지속한글")||(t.includes("이미지")&&t.includes("한글")), msg:"이미지 속 한글을 직접 읽어서 입력하세요"},
 ];
 function macroHit(ocrN){ for(const m of MACROS){ if(m.test(ocrN)) return m; } return null; }
 
 let lastKey="";
-function ocrSearch(ocrRaw){
+function ocrSearch(raw){
   const box=document.getElementById("results");
-  if(!dataReady){return;}
-  const ocrN=norm(ocrRaw);
-  if(ocrN.length<4){return;}
+  if(!dataReady) return;
+  const ocrN=norm(raw);
+  if(ocrN.length<4) return;
   const mh=macroHit(ocrN);
   if(mh){ if(lastKey!=="macro"){ lastKey="macro";
       box.innerHTML=`<div class="macro"><div class="macro-title">⭐⭐⭐ 매크로 문제입니다! ⭐⭐⭐</div><div class="macro-sub">${mh.msg} · 족보에 정답이 없어요</div></div>`;
@@ -158,23 +156,45 @@ function ocrSearch(ocrRaw){
   }
   best.sort((a,b)=>b.pct-a.pct||b.matched-a.matched);
   const top=best.slice(0,4);
-  if(!top.length){ if(lastKey!=="none"){box.innerHTML='<div class="empty">아직 일치하는 문제 없음 — 문제가 화면에 떠 있을 때 잡혀요.</div>';lastKey="none";} return; }
+  if(!top.length){ if(lastKey!=="none"){box.innerHTML='<div class="empty">아직 일치하는 문제 없음 — 형광 박스가 문제 글자에 맞는지 확인하세요.</div>';lastKey="none";} return; }
   const key=top.map(d=>d.q).join("|");
-  if(key===lastKey) return;   // 같은 결과면 다시 안 그림(깜빡임 방지)
+  if(key===lastKey) return;
   lastKey=key;
+  const showCat=!cat;
   box.innerHTML=top.map((d,i)=>{
     const p=Math.round(d.pct*100), cls=p>=80?"hi":p>=55?"mid":"lo";
     return `<div class="res${i===0?' top':''}">
-      <div class="res-main">
-        <div class="q">${hl(d.q,ocrRaw)}</div>
-        <div class="a"><b>정답</b>${d.a||"-"}</div>
-        <div class="cat">${d.cat}</div>
-      </div>
-      <div class="pct ${cls}">${p}%<small>유사도</small></div>
-    </div>`;}).join("");
+      <div class="res-main"><div class="q">${hl(d.q,raw)}</div>
+        <div class="a"><span class="alabel">정답</span><span class="ans">${d.a||"-"}</span>${showCat?`<span class="catTag">${d.cat}</span>`:""}</div></div>
+      <div class="pct ${cls}">${p}%<small>유사도</small></div></div>`;}).join("");
 }
-/* 손으로 친 재검색도 같은 엔진 사용 */
 document.getElementById("btnSearch").onclick=()=>{lastKey="";ocrSearch(extractQuestion(document.getElementById("ocrText").value));};
+
+/* ===== 인식 영역(드래그·크기조절·저장) ===== */
+const DEF_REGION={x:0.15,y:0.03,w:0.70,h:0.27};
+let region=loadRegion();
+function loadRegion(){try{const r=JSON.parse(localStorage.getItem("ocrRegion"));if(r&&r.w>0.02&&r.h>0.02)return r;}catch(e){}return {...DEF_REGION};}
+function saveRegion(){try{localStorage.setItem("ocrRegion",JSON.stringify(region));}catch(e){}}
+function applyZone(){const z=document.getElementById("ocrZone");
+  z.style.left=(region.x*100).toFixed(2)+"%";z.style.top=(region.y*100).toFixed(2)+"%";
+  z.style.width=(region.w*100).toFixed(2)+"%";z.style.height=(region.h*100).toFixed(2)+"%";}
+function clamp(v,a,b){return v<a?a:v>b?b:v;}
+(function initZoneDrag(){
+  const zone=document.getElementById("ocrZone"), wrap=document.getElementById("videoWrap");
+  let mode=null,sx,sy,sr;
+  zone.addEventListener("mousedown",e=>{
+    mode=e.target.classList.contains("zhandle")?"resize":"move";
+    sx=e.clientX;sy=e.clientY;sr={...region};e.preventDefault();});
+  window.addEventListener("mousemove",e=>{
+    if(!mode)return; const r=wrap.getBoundingClientRect(); if(!r.width)return;
+    const dx=(e.clientX-sx)/r.width, dy=(e.clientY-sy)/r.height;
+    if(mode==="move"){ region.x=clamp(sr.x+dx,0,1-sr.w); region.y=clamp(sr.y+dy,0,1-sr.h); }
+    else { region.w=clamp(sr.w+dx,0.05,1-sr.x); region.h=clamp(sr.h+dy,0.03,1-sr.y); }
+    applyZone();});
+  window.addEventListener("mouseup",()=>{ if(mode){mode=null;saveRegion();} });
+  applyZone();
+})();
+document.getElementById("btnReset").onclick=()=>{region={...DEF_REGION};applyZone();saveRegion();};
 
 /* ===== 화면 공유 + 실시간 루프 ===== */
 let stream=null, running=false, worker=null, workerReady=false;
@@ -183,6 +203,7 @@ async function ensureWorker(){
   if(workerReady)return;
   setStatus("OCR 엔진 로딩 중… (처음 한 번, 10여 MB)");
   worker=await Tesseract.createWorker(["kor","eng"]);
+  try{ await worker.setParameters({ tessedit_pageseg_mode:"6" }); }catch(e){}
   workerReady=true;
 }
 btnShare.onclick=async()=>{
@@ -191,9 +212,10 @@ btnShare.onclick=async()=>{
     stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});
     video.srcObject=stream;
     stream.getVideoTracks()[0].onended=()=>stopAll();
+    document.getElementById("prevWrap").open=true;
     await ensureWorker();
     running=true; btnShare.textContent="■ 중지"; btnShare.className="stop";
-    setDot(true); setStatus("실시간 인식 중…");
+    setDot(true); setStatus("실시간 인식 중… 형광 박스를 문제창에 맞춰주세요");
     loop();
   }catch(e){ setStatus("화면공유 취소/실패: "+e.message); }
 };
@@ -202,10 +224,7 @@ function stopAll(){
   btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
-const TOP_SKIP=0.06;    // 맨 위(창 제목표시줄) 제외
-const TOP_FRAC=0.42;    // 문제 박스가 뜨는 상단 띠만 인식(속도↑·노이즈↓)
-const MAX_W=1200;       // 이 폭보다 크면 줄여서 인식(속도↑)
-const CHANGE_THRESH=6;  // 화면 변화 감지 민감도(작을수록 민감). 배경 애니는 무시, 문제 바뀌면 감지
+const TARGET_W=1400, CHANGE_THRESH=6;   // 자른 영역을 이 폭 근처로 맞춰 인식(작으면 확대→선명도↑)
 let lastSig=null;
 function makeSig(d,w,h){const cols=24,rows=8,s=new Array(cols*rows);
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=((c+0.5)/cols*w)|0,y=((r+0.5)/rows*h)|0;s[r*cols+c]=d[(y*w+x)*4];}return s;}
@@ -216,13 +235,13 @@ async function loop(){
       try{
         const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
         const vw=video.videoWidth, vh=video.videoHeight;
-        const sy=Math.round(vh*TOP_SKIP), cropH=Math.round(vh*(TOP_FRAC-TOP_SKIP));
-        const sc=vw>MAX_W?MAX_W/vw:1;
-        cv.width=Math.round(vw*sc); cv.height=Math.round(cropH*sc);
-        ctx.drawImage(video, 0,sy, vw,cropH, 0,0, cv.width,cv.height);
+        const sx=Math.round(region.x*vw), sy=Math.round(region.y*vh);
+        const cw=Math.max(1,Math.round(region.w*vw)), ch=Math.max(1,Math.round(region.h*vh));
+        let sc=TARGET_W/cw; sc=sc<0.5?0.5:sc>2.5?2.5:sc;   // 작은 영역은 확대(최대 2.5배), 너무 크면 축소
+        cv.width=Math.round(cw*sc); cv.height=Math.round(ch*sc);
+        ctx.drawImage(video, sx,sy, cw,ch, 0,0, cv.width,cv.height);
         const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
         for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=(g-128)*1.25+128;g=g<0?0:g>255?255:g;d[i]=d[i+1]=d[i+2]=g;}
-        // 화면이 거의 안 바뀌었으면 OCR 건너뜀 (같은 문제 유지 중)
         const sig=makeSig(d,cv.width,cv.height);
         if(sigDiff(sig,lastSig)<CHANGE_THRESH){ await new Promise(r=>setTimeout(r,120)); continue; }
         lastSig=sig;
@@ -231,11 +250,11 @@ async function loop(){
         const {data}=await worker.recognize(cv);
         const ms=Math.round(performance.now()-t0);
         const text=(data.text||"").replace(/\s+/g," ").trim();
-        const qtext=extractQuestion(text);   // [문제] 부분만
+        const qtext=extractQuestion(text);
         document.getElementById("ocrText").value=text;
-        document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms · 문제추출: ${qtext.slice(0,40)}`;
+        document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms · 문제: ${qtext.slice(0,38)}`;
         ocrSearch(qtext);
-      }catch(e){ /* 한 프레임 실패는 무시하고 계속 */ }
+      }catch(e){}
     }
     await new Promise(r=>setTimeout(r,100));
   }
