@@ -130,7 +130,7 @@
   <button id="howToggle" class="prevhead open">📘 사용 방법 <span class="mini">(*PC 크롬 권장)</span><span id="howArrow" style="float:right">▾</span></button>
   <div id="howBody" class="steps">
     <b>실시간 검색 시작</b> 버튼 클릭 → 화면 공유 창에서 <b>[창]</b> → <b>MapleStory Worlds</b> 선택<br>
-    → 아래 공유화면에서 <b>형광 박스를 파란 문제창에 맞게</b> 한 번 드래그(모서리로 크기조절)하세요.
+    → 아래 공유화면에서 <b>형광 박스를 파란 문제창이 넉넉히 들어가게 넓게</b> 드래그(모서리로 크기조절)하세요.
   </div>
   <div style="margin-bottom:8px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
 
@@ -150,12 +150,15 @@
   <!-- 공유화면/영역 (접어도 인식은 계속 됨) -->
   <button id="togglePrev" class="prevhead">🖥️ 공유화면 · 인식 영역 조절 <span id="togArrow">▾</span></button>
   <div id="prevBody">
-    <div class="mini" style="margin-top:8px">형광 박스를 <b>문제 글자에 맞게</b> 드래그/크기조절 하세요. <b>출제자(큐플레이) 부분은 빼고</b> 잡으면 더 정확해요. (자동 저장)<br>💡 <b>문제가 안 잡히면 박스를 살짝 움직였다 놓으면</b> 다시 인식돼요.</div>
-    <div id="videoWrap"><video id="video" autoplay playsinline muted></video><div id="ocrZone"><span class="zlabel">📷 문제 영역</span><div class="zhandle"></div></div></div>
-    <div class="mini" id="ocrInfo" style="margin-top:6px"></div>
+    <!-- OCR 원문 + 컨트롤 (공유화면 위) -->
+    <div class="mini" id="ocrInfo" style="margin-top:8px"></div>
     <textarea id="ocrText" placeholder="OCR 원문…"></textarea>
+    <button id="btnReOcr" class="primary" style="font-size:13px;padding:8px 12px" title="지금 화면을 다시 인식">🔄 재인식</button>
     <button id="btnSearch" style="font-size:13px;padding:8px 12px">이 텍스트로 다시 검색</button>
     <button id="btnReset" style="font-size:13px;padding:8px 12px">영역 초기화</button>
+    <!-- 공유화면(미리보기) -->
+    <div class="mini" style="margin-top:12px">형광 박스를 <b>문제창이 넉넉히 들어가게 넓게</b> 잡으세요 — 좁게 잡는 것보다 <b>넓게 잡아야 인식이 더 잘돼요.</b> (출제자 글자는 자동으로 걸러지니 신경 안 써도 돼요 · 자동 저장)<br>💡 <b>문제가 안 잡히면 박스를 살짝 움직였다 놓으면</b> 다시 인식돼요.</div>
+    <div id="videoWrap"><video id="video" autoplay playsinline muted></video><div id="ocrZone"><span class="zlabel">📷 문제 영역</span><div class="zhandle"></div></div></div>
     <div class="mini" id="loadMsg" style="margin-top:6px"></div>
   </div>
 
@@ -444,6 +447,11 @@ if(new URLSearchParams(location.search).get("pop")==="1") document.body.classLis
 document.getElementById("btnPopup").onclick=()=>{
   window.open(location.pathname+"?pop=1","qocr_popup","width=440,height=640,menubar=no,toolbar=no,location=no");
 };
+/* 수동 재인식 — 멈췄을 때 지금 화면을 강제로 다시 인식 */
+document.getElementById("btnReOcr").onclick=()=>{
+  lastSig=null; lastOcrAt=0; haveGood=false; lastKey=""; goodOcrN="";
+  setStatus(running?"다시 인식 중…":"먼저 ▶ 실시간 검색 시작을 눌러주세요");
+};
 
 /* ===== 화면 공유 + 실시간 루프 ===== */
 let stream=null, running=false, worker=null, workerReady=false;
@@ -464,7 +472,7 @@ btnShare.onclick=async()=>{
     stream.getVideoTracks()[0].onended=()=>stopAll();
     if(!document.body.classList.contains("pop")) document.getElementById("prevBody").classList.remove("collapsed");
     await ensureWorker();
-    running=true; haveGood=false; lastKey=""; lastSig=null; goodOcrN="";
+    running=true; haveGood=false; lastKey=""; lastSig=null; goodOcrN=""; lastOcrAt=0;
     btnShare.textContent="■ 중지"; btnShare.className="stop";
     setDot(true); setStatus("실시간 인식 중…");
     loop();
@@ -478,9 +486,9 @@ function stopAll(){
 let TARGET_W=+(localStorage.getItem("ocrQuality")||1300);  // 속도/정확도 (버튼으로 조절, 저장)
 (function initQuality(){const q=document.getElementById("quality");q.value=String(TARGET_W);
   q.onchange=()=>{TARGET_W=+q.value;try{localStorage.setItem("ocrQuality",q.value);}catch(e){}};})();
-const DIFF_PX=24, DIFF_MIN=4;        // 샘플점이 24이상 바뀐 게 4개↑면 '화면 변함' → 글자 변화에 민감
-let lastSig=null;
-function makeSig(d,w,h){const cols=28,rows=10,s=new Array(cols*rows);
+const DIFF_PX=22, DIFF_MIN=3;        // 샘플점이 22이상 바뀐 게 3개↑면 '화면 변함' (넓게 잡아도 글자변화 감지)
+let lastSig=null, lastOcrAt=0;
+function makeSig(d,w,h){const cols=44,rows=18,s=new Array(cols*rows);   // 촘촘히(792점) — 넓은 영역에서 작은 글자변화도 잡음
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=((c+0.5)/cols*w)|0,y=((r+0.5)/rows*h)|0;s[r*cols+c]=d[(y*w+x)*4];}return s;}
 function sigChanged(a,b){if(!a||!b)return true;let n=0;for(let i=0;i<a.length;i++)if(Math.abs(a[i]-b[i])>DIFF_PX)n++;return n>=DIFF_MIN;}
 async function loop(){
@@ -504,8 +512,10 @@ async function loop(){
         // 3) 대비 강화: 회색 글자를 진하게, 배경을 밝게
         for(let i=0;i<d.length;i+=4){let v=inv?255-d[i]:d[i];v=(v-160)*2.2+128;v=v<0?0:v>255?255:v;d[i]=d[i+1]=d[i+2]=v;}
         const sig=makeSig(d,cv.width,cv.height);
-        if(!sigChanged(sig,lastSig)){ await new Promise(r=>setTimeout(r,120)); continue; }
-        lastSig=sig;
+        const nowT=performance.now();
+        // 화면 바뀌면 OCR. 안 바뀐 것 같아도 1.3초마다는 강제로 한 번(감지 놓침 대비)
+        if(!sigChanged(sig,lastSig) && (nowT-lastOcrAt)<1300){ await new Promise(r=>setTimeout(r,120)); continue; }
+        lastSig=sig; lastOcrAt=nowT;
         ctx.putImageData(img,0,0);
         // 0) 독음(한자) 모양매칭 먼저 시도 — 확신 높으면 독음 띄우고 한글 OCR 건너뜀
         let handled=false;
