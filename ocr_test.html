@@ -94,7 +94,8 @@
     PC <b>크롬</b> 권장 · 시작 → <b>[창]</b> → <b>MapleStory Worlds</b> 선택.
     아래 미리보기에서 <b>형광 박스를 파란 문제창에 맞게</b> 한 번 드래그(모서리로 크기조절)하면 기억해요.
   </div>
-  <div style="margin-bottom:10px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
+  <div style="margin-bottom:8px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
+  <input id="manualQ" placeholder="⌨️ OCR이 안 될 땐 문제를 직접 입력해서 검색 (입력 중엔 자동인식 멈춤)" style="width:100%;margin-bottom:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px">
 
   <!-- 결과 (메인) -->
   <div id="results"><div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div></div>
@@ -178,9 +179,42 @@ document.getElementById("results").addEventListener("click",e=>{
 function textSim(a,b){ if(!a||!b)return 0; const g=new Set();
   for(let i=0;i+3<=b.length;i++) g.add(b.slice(i,i+3)); if(!g.size)return 0;
   let n=0; for(const x of g) if(a.includes(x)) n++; return n/g.size; }
+/* 직접 입력 검색 (OCR 실패 시) — 문제에 입력어가 들어있는지 '정방향' 매칭 */
+function cardHTML(d,i,label){
+  const kkong=d.cat==="꽁꽁";
+  const copyIco=kkong?'<span class="copybtn" title="정답 복사"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>':'';
+  return `<div class="res${i===0?' top':''}${kkong?' copyable':''}" data-i="${i}"${kkong?' title="클릭하면 정답 복사"':''}>
+    <div class="res-main"><div class="q">${d.q}</div>
+      <div class="a"><span class="alabel">정답</span><span class="ans">${d.a||"-"}</span><span class="catTag">${d.cat}</span></div></div>${copyIco}</div>`;
+}
+function manualSearch(){
+  const q=document.getElementById("manualQ").value.trim();
+  const box=document.getElementById("results");
+  if(!q){ lastKey=""; haveGood=false; box.innerHTML='<div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div>'; return; }
+  if(!dataReady){ box.innerHTML='<div class="mini">데이터 불러오는 중…</div>'; return; }
+  const cat=document.getElementById("cat").value;
+  const qn=norm(q), toks=q.split(/\s+/).map(norm).filter(Boolean);
+  const best=[];
+  for(const d of DATA){
+    if(cat&&d.cat!==cat) continue;
+    const qt=d._qn||(d._qn=norm(d.q));
+    let s=0;
+    const idx=qt.indexOf(qn);
+    if(idx>=0) s=100-Math.min(50,idx);
+    else { let all=true,mn=1e9; for(const t of toks){const p=qt.indexOf(t);if(p<0){all=false;break;}if(p<mn)mn=p;} if(all&&toks.length) s=50-Math.min(30,(mn/5)|0); }
+    if(s>0) best.push({...d,s});
+  }
+  best.sort((a,b)=>b.s-a.s);
+  const top=best.slice(0,6); lastTop=top;
+  box.innerHTML = top.length ? top.map((d,i)=>cardHTML(d,i)).join("") : '<div class="empty">일치하는 문제 없음</div>';
+}
+(function(){const el=document.getElementById("manualQ");let t=null;
+  el.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(manualSearch,180);});})();
+
 function ocrSearch(raw){
   const box=document.getElementById("results");
   if(!dataReady) return;
+  if(document.getElementById("manualQ").value.trim()) return;   // 수동 입력 중엔 자동인식이 덮지 않음
   const ocrN=norm(raw);
   if(ocrN.length<4) return;
   const mh=macroHit(ocrN);
@@ -209,7 +243,7 @@ function ocrSearch(raw){
       if(textSim(ocrN,goodOcrN)>=0.35) return;   // 같은 문제 → 답 유지(긴 문제 스크롤 대응)
       haveGood=false;                            // 새 문제인데 못 읽음 → 붙박이 해제
     }
-    if(!top.length){ if(lastKey!=="unread"){box.innerHTML='<div class="empty">🔍 문제를 못 읽었어요 — "정확" 모드로 바꾸거나 창을 크게 / 영역을 확인하세요.</div>';lastKey="unread";} return; }
+    if(!top.length){ if(lastKey!=="unread"){box.innerHTML='<div class="empty">🔍 문제를 못 읽었어요 — <b>위 ⌨️ 입력칸에 문제를 직접 쳐서</b> 검색하세요.<br><span class="mini">(또는 "정확" 모드 / 영역을 살짝 옮겨보기)</span></div>';lastKey="unread";} return; }
     // 약한 후보라도 표시(확신 아님 → 기억 안 함)
   }
   const key=top.map(d=>d.q).join("|");
@@ -311,8 +345,6 @@ async function loop(){
         let sc=TARGET_W/cw; sc=sc<0.5?0.5:sc>2.5?2.5:sc;   // 작은 영역은 확대(최대 2.5배), 너무 크면 축소
         cv.width=Math.round(cw*sc); cv.height=Math.round(ch*sc);
         ctx.drawImage(video, sx,sy, cw,ch, 0,0, cv.width,cv.height);
-        // 출제자 라벨(우상단) 덮기 → OCR 레이아웃 순서 꼬임 방지
-        ctx.fillStyle="#fff"; ctx.fillRect(cv.width*0.62, 0, cv.width*0.38, cv.height*0.17);
         const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
         // 1) 그레이스케일
         for(let i=0;i<d.length;i+=4){d[i]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];}
