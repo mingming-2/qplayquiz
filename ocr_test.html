@@ -209,7 +209,8 @@ function manualSearch(){
   box.innerHTML = top.length ? top.map((d,i)=>cardHTML(d,i)).join("") : '<div class="empty">일치하는 문제 없음</div>';
 }
 (function(){const el=document.getElementById("manualQ");let t=null;
-  el.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(manualSearch,180);});})();
+  el.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(manualSearch,180);});
+  el.addEventListener("keydown",e=>{ if(e.key==="Escape"){ el.value=""; clearTimeout(t); manualSearch(); el.blur(); } });})();
 
 function ocrSearch(raw){
   const box=document.getElementById("results");
