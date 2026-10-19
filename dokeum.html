@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빠른 독음 찾기</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{--ink:#0E1020;--surface:#181B34;--surface-2:#20244a;--line:#2c3160;--text:#EDEEF7;--muted:#8A90BC;--buzz:#C6F135;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:-apple-system,"Malgun Gothic","맑은 고딕",sans-serif;display:flex;flex-direction:column;height:100vh}
+  .head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .head b{font-size:15px}
+  .dk-tabs{display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap}
+  .dk-tab{font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);background:var(--surface-2);border:0;padding:6px 12px;border-radius:999px}
+  .dk-tab.on{color:#101010;background:var(--buzz)}
+  .dk-search{padding:11px 14px 0}
+  .dk-search input{width:100%;box-sizing:border-box;padding:10px 12px;font-size:15px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none}
+  .dk-search input:focus{border-color:var(--buzz)}
+  .dk-body{flex:1;overflow-y:auto;padding:12px 14px 16px}
+  .dk-sec{font-size:12px;font-weight:700;color:var(--buzz);margin:14px 2px 7px}
+  .dk-sec:first-child{margin-top:2px}
+  .dk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .dk-card{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 3px 9px;text-align:center;cursor:pointer}
+  .dk-card:hover{border-color:var(--buzz)}
+  .dk-card .hanja{font-weight:200;color:var(--buzz);line-height:1.1;word-break:keep-all}
+  .dk-card .kor{font-size:13px;font-weight:600;color:#B9BEE6;margin-top:5px}
+  .dk-empty{text-align:center;color:var(--muted);font-size:14px;padding:32px 0}
+  #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--buzz);color:#101010;font-weight:800;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+  #toast.show{opacity:1}
+  @media(max-width:420px){.dk-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+  <div class="head"><b id="title">꽁꽁 빠른 독음 찾기</b><span class="dk-sub" style="font-size:12px;color:var(--muted)">카드 클릭 = 복사</span></div>
+  <div class="dk-tabs" id="tabs"></div>
+  <div class="dk-search"><input id="q" placeholder="독음이나 한자로 찾기… (ESC로 지움)" autocomplete="off"></div>
+  <div class="dk-body" id="body"><div class="dk-empty">불러오는 중…</div></div>
+  <div id="toast"></div>
+<script>
+const DATA_KEY="qplay!2026#kkong";
+const GAME=new URLSearchParams(location.search).get("game")||"꽁꽁";
+let dkType="전체", DOKEUM=null;
+const norm=s=>(s||"").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
+async function load(){
+  const res=await fetch("d7k2m9x.txt"); if(!res.ok) throw new Error(res.status);
+  const bin=atob((await res.text()).trim()), key=DATA_KEY, bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i)^key.charCodeAt(i%key.length);
+  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  DOKEUM=JSON.parse(new TextDecoder().decode(await new Response(stream).arrayBuffer()));
+}
+function list(){ return (DOKEUM||[]).filter(d=>d.g===GAME).map(d=>({hanja:d.h,kor:d.k,type:d.t})); }
+function choseong(kr){const map={"ㄲ":"ㄱ","ㄸ":"ㄷ","ㅃ":"ㅂ","ㅆ":"ㅅ","ㅉ":"ㅈ"};const c=(kr||"").charCodeAt(0);
+  if(c>=0xAC00&&c<=0xD7A3){const cho=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"][Math.floor((c-0xAC00)/588)];return map[cho]||cho;}return "#";}
+function escA(s){return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+function render(){
+  let items=list();
+  if(dkType!=="전체") items=items.filter(x=>x.type===dkType);
+  const kw=norm(document.getElementById("q").value);
+  if(kw) items=items.filter(x=>norm(x.hanja).includes(kw)||norm(x.kor).includes(kw));
+  const seen=new Set(); items=items.filter(x=>{const k=x.hanja+"|"+x.kor;if(seen.has(k))return false;seen.add(k);return true;});
+  const fontFor=L=>L<=2?29:L===3?23:L===4?18:L===5?15:13;
+  const isAll=dkType==="전체";
+  const card=x=>`<div class="dk-card" data-copy="${escA(x.kor)}"><div class="hanja" style="font-size:${fontFor(x.kor.length)}px">${x.hanja}</div><div class="kor">${x.kor}</div></div>`;
+  const groups={},order=[];
+  if(isAll){ items.sort((a,b)=>a.kor.localeCompare(b.kor,"ko")); items.forEach(x=>{const c=choseong(x.kor);if(!groups[c]){groups[c]=[];order.push(c);}groups[c].push(x);}); }
+  else { items.sort((a,b)=>a.kor.length-b.kor.length||a.kor.localeCompare(b.kor,"ko")); items.forEach(x=>{const L=x.kor.length;if(!groups[L]){groups[L]=[];order.push(L);}groups[L].push(x);}); }
+  const body=document.getElementById("body");
+  if(!items.length){ body.innerHTML='<div class="dk-empty">해당하는 독음이 없어요.</div>'; return; }
+  body.innerHTML=order.map(sec=>`<div class="dk-sec">${isAll?sec:sec+"글자"}</div><div class="dk-grid">${groups[sec].map(card).join("")}</div>`).join("");
+}
+function buildTabs(){
+  const items=list(); const counts={}; items.forEach(x=>counts[x.type]=(counts[x.type]||0)+1);
+  const tabs=["전체",...Object.keys(counts).sort((a,b)=>counts[b]-counts[a])];
+  document.getElementById("tabs").innerHTML=tabs.map(t=>{const n=t==="전체"?items.length:counts[t];return `<button class="dk-tab ${t===dkType?'on':''}" data-t="${t}">${t} · ${n}</button>`;}).join("");
+}
+let toastT=null;
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1300);}
+document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest(".dk-tab");if(!b)return;dkType=b.dataset.t;buildTabs();render();});
+document.getElementById("q").addEventListener("input",render);
+document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";render();}});
+document.getElementById("body").addEventListener("click",e=>{const c=e.target.closest(".dk-card");if(!c)return;
+  const v=c.dataset.copy||""; if(!v)return;
+  navigator.clipboard.writeText(v).then(()=>toast("복사됨: "+v)).catch(()=>toast("복사하려면 이 창을 한 번 클릭"));});
+document.getElementById("title").textContent=GAME+" 빠른 독음 찾기";
+(async()=>{ try{ await load(); buildTabs(); render(); }
+  catch(e){ document.getElementById("body").innerHTML='<div class="dk-empty">독음을 불러오지 못했어요. (qplayquiz 저장소에 올려야 d7k2m9x.txt를 읽어요)</div>'; } })();
+</script>
+</body>
+</html>
