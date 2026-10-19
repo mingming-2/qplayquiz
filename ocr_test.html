@@ -55,6 +55,14 @@
   .zlabel{position:absolute;top:0;left:0;background:var(--buzz);color:#101010;font-size:10px;font-weight:800;padding:1px 6px;border-radius:7px 0 6px 0;white-space:nowrap;line-height:1.3;pointer-events:none}
   .zhandle{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:var(--buzz);border:2px solid #101010;border-radius:3px;cursor:nwse-resize}
   .mini{font-size:12px;color:var(--muted)}
+  .seclabel{font-size:12px;color:var(--muted);font-weight:800;margin:0 0 7px 2px;display:flex;align-items:center;gap:8px}
+  .seclabel .bar{flex:1;height:1px;background:var(--line)}
+  #manualQ{width:100%;margin:2px 0 12px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+  #manualWrap{background:rgba(32,36,74,.35);border:1px dashed var(--line);border-radius:12px;padding:10px 10px 4px;margin-bottom:6px}
+  .prevhead{width:100%;text-align:left;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px}
+  #prevBody{overflow:hidden}
+  #prevBody.collapsed > *{display:none}
+  #prevBody.collapsed > #videoWrap{display:block;position:fixed;left:-99999px;top:0;width:420px}
   .res{position:relative}
   .res.copyable{cursor:pointer}
   .copybtn{position:absolute;right:9px;top:7px;color:var(--muted);line-height:0;display:flex}
@@ -95,14 +103,23 @@
     아래 미리보기에서 <b>형광 박스를 파란 문제창에 맞게</b> 한 번 드래그(모서리로 크기조절)하면 기억해요.
   </div>
   <div style="margin-bottom:8px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
-  <input id="manualQ" placeholder="⌨️ OCR이 안 될 땐 문제를 직접 입력해서 검색 (입력 중엔 자동인식 멈춤)" style="width:100%;margin-bottom:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px">
 
-  <!-- 결과 (메인) -->
+  <!-- 자동 인식 결과 -->
+  <div class="seclabel">🎯 자동 인식<span class="bar"></span></div>
   <div id="results"><div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div></div>
 
-  <!-- 하단: 영역 조절 + 확인용 -->
-  <details id="prevWrap" open>
-    <summary>🖥️ 공유화면 · 인식 영역 조절</summary>
+  <!-- 직접 입력 (가운데) -->
+  <input id="manualQ" autocomplete="off" placeholder="⌨️ OCR이 안 될 땐 직접 입력해서 검색 (ESC로 지움)">
+
+  <!-- 직접 검색 결과 -->
+  <div id="manualWrap" style="display:none">
+    <div class="seclabel">⌨️ 직접 검색 결과<span class="bar"></span></div>
+    <div id="manualResults"></div>
+  </div>
+
+  <!-- 공유화면/영역 (접어도 인식은 계속 됨) -->
+  <button id="togglePrev" class="prevhead">🖥️ 공유화면 · 인식 영역 조절 <span id="togArrow">▾</span></button>
+  <div id="prevBody">
     <div class="mini" style="margin-top:8px">형광 박스를 <b>문제 글자에 맞게</b> 드래그/크기조절 하세요. <b>출제자(큐플레이) 부분은 빼고</b> 잡으면 더 정확해요. (자동 저장)<br>💡 <b>문제가 안 잡히면 박스를 살짝 움직였다 놓으면</b> 다시 인식돼요.</div>
     <div id="videoWrap"><video id="video" autoplay playsinline muted></video><div id="ocrZone"><span class="zlabel">📷 문제 영역</span><div class="zhandle"></div></div></div>
     <div class="mini" id="ocrInfo" style="margin-top:6px"></div>
@@ -110,7 +127,7 @@
     <button id="btnSearch" style="font-size:13px;padding:8px 12px">이 텍스트로 다시 검색</button>
     <button id="btnReset" style="font-size:13px;padding:8px 12px">영역 초기화</button>
     <div class="mini" id="loadMsg" style="margin-top:6px"></div>
-  </details>
+  </div>
 
   <canvas id="cv"></canvas>
   <div id="toast"></div>
@@ -160,7 +177,8 @@ const MACROS=[
 ];
 function macroHit(ocrN){ for(const m of MACROS){ if(m.test(ocrN)) return m; } return null; }
 
-let lastKey="", haveGood=false, lastTop=[], goodOcrN="";
+let lastKey="", haveGood=false, goodOcrN="";
+function escA(s){return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
 /* 정답 복사 — 꽁꽁 자동복사(포커스 있을 때) + 카드 클릭 */
 function tryCopy(text,auto){
   if(!text) return;
@@ -171,26 +189,29 @@ function tryCopy(text,auto){
 }
 let toastT=null;
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1400);}
-document.getElementById("results").addEventListener("click",e=>{
+/* 꽁꽁 카드 클릭 시 정답 복사 (자동·수동 영역 모두) */
+document.addEventListener("click",e=>{
   const el=e.target.closest(".res.copyable"); if(!el) return;
-  const i=+el.dataset.i; if(lastTop[i]) tryCopy(lastTop[i].a,false);
+  const a=el.getAttribute("data-ans"); if(a) tryCopy(a,false);
 });
 /* 두 OCR 텍스트가 같은 문제인지(스크롤 등) 대략 판단 */
 function textSim(a,b){ if(!a||!b)return 0; const g=new Set();
   for(let i=0;i+3<=b.length;i++) g.add(b.slice(i,i+3)); if(!g.size)return 0;
   let n=0; for(const x of g) if(a.includes(x)) n++; return n/g.size; }
-/* 직접 입력 검색 (OCR 실패 시) — 문제에 입력어가 들어있는지 '정방향' 매칭 */
-function cardHTML(d,i,label){
+/* 카드 HTML (꽁꽁은 복사 아이콘 + data-ans) */
+function cardHTML(d,i){
   const kkong=d.cat==="꽁꽁";
   const copyIco=kkong?'<span class="copybtn" title="정답 복사"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>':'';
-  return `<div class="res${i===0?' top':''}${kkong?' copyable':''}" data-i="${i}"${kkong?' title="클릭하면 정답 복사"':''}>
+  return `<div class="res${i===0?' top':''}${kkong?' copyable':''}"${kkong?' data-ans="'+escA(d.a)+'" title="클릭하면 정답 복사"':''}>
     <div class="res-main"><div class="q">${d.q}</div>
       <div class="a"><span class="alabel">정답</span><span class="ans">${d.a||"-"}</span><span class="catTag">${d.cat}</span></div></div>${copyIco}</div>`;
 }
+/* 직접 입력 검색 → 아래 '직접 검색 결과' 영역 (자동 인식과 독립) */
 function manualSearch(){
   const q=document.getElementById("manualQ").value.trim();
-  const box=document.getElementById("results");
-  if(!q){ lastKey=""; haveGood=false; box.innerHTML='<div class="empty">실시간 검색을 시작하면 여기에 문제·정답이 떠요.</div>'; return; }
+  const wrap=document.getElementById("manualWrap"), box=document.getElementById("manualResults");
+  if(!q){ wrap.style.display="none"; box.innerHTML=""; return; }
+  wrap.style.display="";
   if(!dataReady){ box.innerHTML='<div class="mini">데이터 불러오는 중…</div>'; return; }
   const cat=document.getElementById("cat").value;
   const qn=norm(q), toks=q.split(/\s+/).map(norm).filter(Boolean);
@@ -205,17 +226,22 @@ function manualSearch(){
     if(s>0) best.push({...d,s});
   }
   best.sort((a,b)=>b.s-a.s);
-  const top=best.slice(0,6); lastTop=top;
+  const top=best.slice(0,6);
   box.innerHTML = top.length ? top.map((d,i)=>cardHTML(d,i)).join("") : '<div class="empty">일치하는 문제 없음</div>';
 }
 (function(){const el=document.getElementById("manualQ");let t=null;
+  el.value="";   // 새로고침 시 브라우저 복원 방지
   el.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(manualSearch,180);});
   el.addEventListener("keydown",e=>{ if(e.key==="Escape"){ el.value=""; clearTimeout(t); manualSearch(); el.blur(); } });})();
+/* 공유화면 접기/펼치기 — 접어도 비디오는 렌더링 유지(OCR 계속 됨) */
+document.getElementById("togglePrev").onclick=()=>{
+  const b=document.getElementById("prevBody"); b.classList.toggle("collapsed");
+  document.getElementById("togArrow").textContent=b.classList.contains("collapsed")?"▸":"▾";
+};
 
 function ocrSearch(raw){
   const box=document.getElementById("results");
   if(!dataReady) return;
-  if(document.getElementById("manualQ").value.trim()) return;   // 수동 입력 중엔 자동인식이 덮지 않음
   const ocrN=norm(raw);
   if(ocrN.length<4) return;
   const mh=macroHit(ocrN);
@@ -252,12 +278,11 @@ function ocrSearch(raw){
   lastKey=key;
   if(strong){ haveGood=true; goodOcrN=ocrN; }
   const showCat=!cat;
-  lastTop=top;
   box.innerHTML=top.map((d,i)=>{
     const p=Math.round(d.pct*100), cls=p>=80?"hi":p>=55?"mid":"lo";
     const kkong=d.cat==="꽁꽁";
     const copyIco=kkong?'<span class="copybtn" title="정답 복사"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>':'';
-    return `<div class="res${i===0?' top':''}${kkong?' copyable':''}" data-i="${i}"${kkong?' title="클릭하면 정답 복사"':''}>
+    return `<div class="res${i===0?' top':''}${kkong?' copyable':''}"${kkong?' data-ans="'+escA(d.a)+'" title="클릭하면 정답 복사"':''}>
       <div class="res-main"><div class="q">${hl(d.q,raw)}</div>
         <div class="a"><span class="alabel">정답</span><span class="ans">${d.a||"-"}</span>${showCat?`<span class="catTag">${d.cat}</span>`:""}</div></div>
       <div class="pct ${cls}">${p}%<small>유사도</small></div>${copyIco}</div>`;}).join("");
@@ -314,7 +339,7 @@ btnShare.onclick=async()=>{
     stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});
     video.srcObject=stream;
     stream.getVideoTracks()[0].onended=()=>stopAll();
-    if(!document.body.classList.contains("pop")) document.getElementById("prevWrap").open=true;
+    if(!document.body.classList.contains("pop")) document.getElementById("prevBody").classList.remove("collapsed");
     await ensureWorker();
     running=true; haveGood=false; lastKey=""; lastSig=null; goodOcrN="";
     btnShare.textContent="■ 중지"; btnShare.className="stop";
