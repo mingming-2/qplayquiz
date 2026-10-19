@@ -54,6 +54,29 @@
   #ocrZone{position:absolute;border:2px solid var(--buzz);background:rgba(198,241,53,.12);box-sizing:border-box;cursor:move}
   .zlabel{position:absolute;top:0;left:0;background:var(--buzz);color:#101010;font-size:10px;font-weight:800;padding:1px 6px;border-radius:7px 0 6px 0;white-space:nowrap;line-height:1.3;pointer-events:none}
   .zhandle{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:var(--buzz);border:2px solid #101010;border-radius:3px;cursor:nwse-resize}
+  /* 독음 팝업 */
+  #dkOpen{background:var(--surface);color:var(--buzz);border:1.5px solid var(--line);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer}
+  #dkOpen:hover{border-color:var(--buzz)}
+  #dkModal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+  #dkModal[hidden]{display:none}
+  .dk-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:560px;max-width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+  .dk-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .dk-head b{font-size:15px}
+  .dk-x{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+  .dk-tabs{display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap}
+  .dk-tab{font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);background:var(--surface-2);border:0;padding:6px 12px;border-radius:999px}
+  .dk-tab.on{color:#101010;background:var(--buzz)}
+  .dk-search{padding:11px 14px 0}
+  .dk-search input{width:100%;box-sizing:border-box;padding:10px 12px;font-size:15px;background:var(--ink);border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none}
+  .dk-body{flex:1;overflow-y:auto;padding:12px 14px 16px}
+  .dk-sec{font-size:12px;font-weight:700;color:var(--buzz);margin:14px 2px 7px}
+  .dk-sec:first-child{margin-top:2px}
+  .dk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .dk-card{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 3px 9px;text-align:center;cursor:pointer}
+  .dk-card:hover{border-color:var(--buzz)}
+  .dk-card .hanja{font-weight:200;color:var(--buzz);line-height:1.1;word-break:keep-all}
+  .dk-card .kor{font-size:13px;font-weight:600;color:#B9BEE6;margin-top:5px}
+  .dk-empty{text-align:center;color:var(--muted);font-size:14px;padding:32px 0}
   .mini{font-size:12px;color:var(--muted)}
   .seclabel{font-size:12px;color:var(--muted);font-weight:800;margin:0 0 7px 2px;display:flex;align-items:center;gap:8px}
   .seclabel .bar{flex:1;height:1px;background:var(--line)}
@@ -96,6 +119,7 @@
       <option value="1800">🎯 정확</option>
     </select>
     <button id="btnShare" class="primary">▶ 실시간 검색 시작</button>
+    <button id="dkOpen" hidden>📖 독음</button>
     <button id="btnPopup" title="게임 옆에 작은 창으로 열기">↗ 팝업</button>
   </div>
   <div class="steps">
@@ -131,6 +155,14 @@
 
   <canvas id="cv"></canvas>
   <div id="toast"></div>
+  <div id="dkModal" hidden>
+    <div class="dk-box">
+      <div class="dk-head"><b id="dkTitle">빠른 독음 찾기</b><button class="dk-x" id="dkClose">✕</button></div>
+      <div class="dk-tabs" id="dkTabs"></div>
+      <div class="dk-search"><input id="dkq" placeholder="독음이나 한자로 찾기…" autocomplete="off"></div>
+      <div class="dk-body" id="dkBody"></div>
+    </div>
+  </div>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 /* ===== 족보 데이터 복호화 ===== */
@@ -399,6 +431,61 @@ async function loop(){
 }
 function setStatus(s){document.getElementById("status").textContent=s;}
 function setDot(on){document.getElementById("dot").className="dot"+(on?" on":"");}
+
+/* ===== 독음 팝업 (꽁꽁 전용) ===== */
+let dkGame="꽁꽁", dkType="전체", DOKEUM=null;
+async function dkEnsure(){
+  if(DOKEUM) return;
+  const res=await fetch("d7k2m9x.txt"); if(!res.ok) throw new Error(res.status);
+  const bin=atob((await res.text()).trim()), key=DATA_KEY, bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i)^key.charCodeAt(i%key.length);
+  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  DOKEUM=JSON.parse(new TextDecoder().decode(await new Response(stream).arrayBuffer()));
+}
+function dkList(){ return (DOKEUM||[]).filter(d=>d.g===dkGame).map(d=>({hanja:d.h,kor:d.k,type:d.t})); }
+function choseong(kr){const map={"ㄲ":"ㄱ","ㄸ":"ㄷ","ㅃ":"ㅂ","ㅆ":"ㅅ","ㅉ":"ㅈ"};const c=(kr||"").charCodeAt(0);
+  if(c>=0xAC00&&c<=0xD7A3){const cho=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"][Math.floor((c-0xAC00)/588)];return map[cho]||cho;}return "#";}
+function dkRender(){
+  let items=dkList();
+  if(dkType!=="전체") items=items.filter(x=>x.type===dkType);
+  const kw=norm(document.getElementById("dkq").value);
+  if(kw) items=items.filter(x=>norm(x.hanja).includes(kw)||norm(x.kor).includes(kw));
+  const seen=new Set(); items=items.filter(x=>{const k=x.hanja+"|"+x.kor;if(seen.has(k))return false;seen.add(k);return true;});
+  const fontFor=L=>L<=2?29:L===3?23:L===4?18:L===5?15:13;
+  const isAll=dkType==="전체";
+  const card=x=>`<div class="dk-card" data-copy="${escA(x.kor)}"><div class="hanja" style="font-size:${fontFor(x.kor.length)}px">${x.hanja}</div><div class="kor">${x.kor}</div></div>`;
+  const groups={},order=[];
+  if(isAll){ items.sort((a,b)=>a.kor.localeCompare(b.kor,"ko")); items.forEach(x=>{const c=choseong(x.kor);if(!groups[c]){groups[c]=[];order.push(c);}groups[c].push(x);}); }
+  else { items.sort((a,b)=>a.kor.length-b.kor.length||a.kor.localeCompare(b.kor,"ko")); items.forEach(x=>{const L=x.kor.length;if(!groups[L]){groups[L]=[];order.push(L);}groups[L].push(x);}); }
+  const body=document.getElementById("dkBody");
+  if(!items.length){ body.innerHTML='<div class="dk-empty">해당하는 독음이 없어요.</div>'; return; }
+  const hint='<div style="text-align:right;font-size:11px;color:var(--muted);margin:0 2px 8px">카드를 눌러 정답 복사</div>';
+  body.innerHTML=hint+order.map(sec=>`<div class="dk-sec">${isAll?sec:sec+"글자"}</div><div class="dk-grid">${groups[sec].map(card).join("")}</div>`).join("");
+}
+function dkBuildTabs(){
+  const items=dkList(); const counts={}; items.forEach(x=>counts[x.type]=(counts[x.type]||0)+1);
+  const list=["전체",...Object.keys(counts).sort((a,b)=>counts[b]-counts[a])];
+  document.getElementById("dkTabs").innerHTML=list.map(t=>{const n=t==="전체"?items.length:counts[t];return `<button class="dk-tab ${t===dkType?'on':''}" data-t="${t}">${t} · ${n}</button>`;}).join("");
+}
+async function openDk(){
+  document.getElementById("dkModal").hidden=false;
+  document.getElementById("dkTitle").textContent="꽁꽁 빠른 독음 찾기";
+  document.getElementById("dkq").value=""; dkType="전체";
+  if(!DOKEUM){ document.getElementById("dkBody").innerHTML='<div class="dk-empty">불러오는 중…</div>';
+    try{ await dkEnsure(); }catch(e){ document.getElementById("dkBody").innerHTML='<div class="dk-empty">독음을 불러오지 못했어요.</div>'; return; } }
+  dkBuildTabs(); dkRender();
+}
+document.getElementById("dkOpen").onclick=openDk;
+document.getElementById("dkClose").onclick=()=>document.getElementById("dkModal").hidden=true;
+document.getElementById("dkModal").addEventListener("click",e=>{ if(e.target.id==="dkModal") document.getElementById("dkModal").hidden=true; });
+document.getElementById("dkq").addEventListener("input",dkRender);
+document.getElementById("dkTabs").addEventListener("click",e=>{const b=e.target.closest(".dk-tab");if(!b)return;dkType=b.dataset.t;dkBuildTabs();dkRender();});
+document.getElementById("dkBody").addEventListener("click",e=>{const c=e.target.closest(".dk-card");if(!c)return;tryCopy(c.dataset.copy||"",false);});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !document.getElementById("dkModal").hidden) document.getElementById("dkModal").hidden=true; });
+/* 게임 선택이 '꽁꽁'일 때만 독음 버튼 */
+(function(){const sel=document.getElementById("cat");
+  function upd(){ document.getElementById("dkOpen").hidden = sel.value!=="꽁꽁"; }
+  sel.addEventListener("change",upd); upd();})();
 
 /* ===== 데이터 로드 ===== */
 (async()=>{
