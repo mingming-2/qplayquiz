@@ -477,31 +477,34 @@ async function ensureWorker(){
      models/korean_dict.txt               (한글 사전)
    없거나 로딩 실패하면 자동으로 Tesseract 사용(도구는 안 깨짐). */
 let paddleOcr=null, paddleReady=false, paddleTried=false, engineName="Tesseract";
+const PP_BASE="https://cdn.jsdelivr.net/gh/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models@main/";
 const PADDLE_MODELS={
-  detectionPath:"models/ch_PP-OCRv4_det_infer.onnx",
-  recognitionPath:"models/korean_PP-OCRv4_rec_infer.onnx",
-  dictionaryPath:"https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/main/ppocr/utils/dict/korean_dict.txt"  // 한글 사전 자동 로드(업로드 불필요)
+  detection:   PP_BASE+"detection/PP-OCRv5_mobile_det_infer.onnx",
+  recognition: PP_BASE+"recognition/multi/korean/v5/korean_PP-OCRv5_mobile_rec_infer.onnx",
+  dictionary:  PP_BASE+"recognition/multi/korean/v5/ppocrv5_korean_dict.txt"
 };
 async function initPaddle(){
   if(paddleTried) return; paddleTried=true;
   try{
-    // 모델 파일이 저장소에 없으면 Paddle 시도 안 함 → 바로 Tesseract(지연 없음)
-    const probe=await fetch(PADDLE_MODELS.detectionPath,{method:"HEAD"});
-    if(!probe.ok) return;
-    setStatus("정확도 모델(PP-OCRv4) 로딩 중… (처음 한 번)");
-    const mod=await import("https://esm.run/@gutenye/ocr-browser");
-    const Ocr=mod.default||mod.Ocr||mod;
-    paddleOcr=await Ocr.create({ models:PADDLE_MODELS });
-    paddleReady=true; engineName="PP-OCRv4";
+    setStatus("정확도 모델(PP-OCRv5) 로딩 중… (처음 한 번, 네트워크)");
+    // 모델 파일을 CDN에서 직접 받기(업로드 불필요). 하나라도 실패하면 Tesseract로 폴백.
+    const [det,rec,dict]=await Promise.all([
+      fetch(PADDLE_MODELS.detection ).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}),
+      fetch(PADDLE_MODELS.recognition).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}),
+      fetch(PADDLE_MODELS.dictionary ).then(r=>{if(!r.ok)throw 0;return r.text();})
+    ]);
+    const mod=await import("https://esm.run/ppu-paddle-ocr/web");
+    const Svc=mod.PaddleOcrService||mod.default||mod;
+    paddleOcr=new Svc({ model:{ detection:det, recognition:rec, charactersDictionary:dict } });
+    await paddleOcr.initialize();
+    paddleReady=true; engineName="PP-OCRv5";
   }catch(e){ paddleReady=false; engineName="Tesseract"; }   // 조용히 폴백
 }
 async function paddleRecognize(cv){
-  const ctx=cv.getContext("2d"), im=ctx.getImageData(0,0,cv.width,cv.height);
-  const r=await paddleOcr.detect({data:im.data,width:cv.width,height:cv.height});
-  const lines=(r&&r.texts)||[];
-  lines.sort((a,b)=>((a.frame&&a.frame.top)||0)-((b.frame&&b.frame.top)||0));
-  return { text:lines.map(t=>t.text).join(" "),
-           conf: lines.length?Math.round(lines.reduce((s,t)=>s+(t.score||0),0)/lines.length*100):0 };
+  const r=await paddleOcr.recognize(cv);
+  let text=(r&&r.text)||"";
+  if(!text && r && Array.isArray(r.lines)) text=r.lines.map(l=>(l&&l.text)||"").join(" ");
+  return { text, conf: (r&&typeof r.score==="number")?Math.round(r.score*100):0 };
 }
 /* ===== 자동/수동 모드 ===== */
 let scanMode=(localStorage.getItem("scanMode")||"auto"), scanning=false, loopRunning=false;
