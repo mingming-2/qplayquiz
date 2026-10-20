@@ -106,6 +106,22 @@
   body.pop .res .q{font-size:12px}
   body.pop .ans{font-size:16px}
   body.pop .pct{font-size:18px;min-width:46px}
+  /* 자동/수동 모드 */
+  .modeseg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .modeseg button{border:0;border-radius:0;padding:9px 14px;font-size:14px;font-weight:800;background:transparent;color:var(--muted)}
+  .modeseg button.on{background:var(--buzz);color:#101010}
+  .modehint{border-radius:12px;padding:11px 14px;font-size:13px;margin-bottom:12px;border:1px solid var(--line)}
+  .modehint.auto{background:rgba(198,241,53,.08);border-color:#43506b}
+  .modehint.manual{background:rgba(32,36,74,.55)}
+  .modehint b{color:var(--buzz)}
+  .modehint .tag{display:inline-block;font-size:11px;font-weight:800;color:#101010;background:var(--buzz);padding:1px 8px;border-radius:9px;margin-right:6px}
+  #scanBar{display:flex;gap:8px;margin-bottom:12px}
+  #manualScan{flex:1 1 auto;font-size:17px;padding:15px;background:var(--buzz);color:#101010;border:0;border-radius:12px;font-weight:800;box-shadow:0 2px 12px rgba(198,241,53,.25);cursor:pointer}
+  #manualScan small{display:block;font-size:11px;font-weight:600;color:#2a3400;margin-top:2px}
+  #manualScan:active{transform:translateY(1px)}
+  #scanBar #btnReOcr2{flex:0 0 auto;font-size:14px;padding:0 18px;border-radius:12px;margin:0}
+  body.pop #manualScan{font-size:15px;padding:12px}
+  .hide{display:none!important}
 </style>
 </head>
 <body>
@@ -118,11 +134,10 @@
       <option>오엑스</option>
       <option>가로,세로</option>
     </select>
-    <select id="quality" title="속도↔정확도">
-      <option value="900">⚡ 빠름</option>
-      <option value="1300">보통</option>
-      <option value="1800">🎯 정확</option>
-    </select>
+    <span class="modeseg">
+      <button type="button" id="mAuto" class="on">⚡ 자동</button>
+      <button type="button" id="mManual">👆 수동</button>
+    </span>
     <button id="btnShare" class="primary">▶ 실시간 검색 시작</button>
     <button id="dkOpen" hidden>📖 독음</button>
     <button id="btnPopup" title="게임 옆에 작은 창으로 열기">↗ 팝업</button>
@@ -133,6 +148,15 @@
     → 아래 공유화면에서 <b>형광 박스를 파란 문제창이 넉넉히 들어가게 넓게</b> 드래그(모서리로 크기조절)하세요.
   </div>
   <div style="margin-bottom:8px"><span id="dot" class="dot"></span><span id="status" class="status">대기 중</span></div>
+
+  <!-- 모드 설명 -->
+  <div class="modehint auto" id="hintAuto"><span class="tag">자동</span><b>화면을 계속 지켜보다가</b> 문제가 바뀌면 알아서 인식해요. 편하지만 계속 읽느라 <b>컴퓨터가 조금 느려질 수 있어요.</b></div>
+  <div class="modehint manual hide" id="hintManual"><span class="tag">수동</span>문제가 뜰 때마다 <b>🔍 인식(또는 스페이스바)</b>을 눌러 그 순간만 읽어요. 평소엔 안 돌아서 <b>컴퓨터 안 느려지고 더 빨라요.</b></div>
+  <!-- 인식 컨트롤 바 (공유 중): 수동=🔍인식+🔄재인식 / 자동=🔄재인식 -->
+  <div id="scanBar" class="hide">
+    <button id="manualScan">🔍 인식 <small>문제 뜨면 누르기 · 스페이스바도 가능</small></button>
+    <button id="btnReOcr2" title="위치 살짝 옮겨 다시 인식">🔄 재인식</button>
+  </div>
 
   <!-- 자동 인식 결과 -->
   <div class="seclabel">🎯 자동 인식<span class="bar"></span></div>
@@ -153,7 +177,7 @@
     <!-- OCR 원문 + 컨트롤 (공유화면 위) -->
     <div class="mini" id="ocrInfo" style="margin-top:8px"></div>
     <textarea id="ocrText" placeholder="OCR 원문…"></textarea>
-    <button id="btnReOcr" class="primary" style="font-size:13px;padding:8px 12px" title="지금 화면을 다시 인식">🔄 재인식</button>
+    <button id="btnReOcr" class="primary" style="font-size:13px;padding:8px 12px" title="원문이 이상하면 — 위치 살짝 옮겨 다시 인식">🔄 재인식</button>
     <button id="btnSearch" style="font-size:13px;padding:8px 12px">이 텍스트로 다시 검색</button>
     <button id="btnReset" style="font-size:13px;padding:8px 12px">영역 초기화</button>
     <!-- 공유화면(미리보기) -->
@@ -322,7 +346,7 @@ function ocrSearch(raw){
   const strong = top.length>0 && top[0].pct>=0.6 && top[0].matched>=3 && (top.length<2 || top[0].rank>=1.3*top[1].rank);
   if(!strong){
     if(haveGood){
-      if(textSim(ocrN,goodOcrN)>=0.35) return;   // 같은 문제 → 답 유지(긴 문제 스크롤 대응)
+      if(textSim(ocrN,goodOcrN)>=0.35) return;   // 같은 문제(스크롤 등)면 답 유지
       haveGood=false;                            // 새 문제인데 못 읽음 → 붙박이 해제
     }
     if(!top.length){ if(lastKey!=="unread"){box.innerHTML='<div class="empty">🔍 문제를 못 읽었어요 — <b>위 ⌨️ 입력칸에 문제를 직접 쳐서</b> 검색하세요.<br><span class="mini">(또는 "정확" 모드 / 영역을 살짝 옮겨보기)</span></div>';lastKey="unread";} return; }
@@ -447,11 +471,17 @@ if(new URLSearchParams(location.search).get("pop")==="1") document.body.classLis
 document.getElementById("btnPopup").onclick=()=>{
   window.open(location.pathname+"?pop=1","qocr_popup","width=440,height=640,menubar=no,toolbar=no,location=no");
 };
-/* 수동 재인식 — 멈췄을 때 지금 화면을 강제로 다시 인식 */
-document.getElementById("btnReOcr").onclick=()=>{
+/* 수동 재인식 — 누를 때마다 캡처 위치를 조금씩 옮겨가며 강제로 다시 인식
+   (계속 못 읽을 때: 아바타 가림·글자 위치를 피해 새 픽셀을 읽게) */
+let ocrNudge=[0,0]; const NUDGES=[[0,0],[9,0],[0,9],[-9,0],[0,-9],[9,9],[-9,-9],[9,-9],[-9,9]]; let nudgeI=0;
+function reOcr(){
+  nudgeI=(nudgeI+1)%NUDGES.length; ocrNudge=NUDGES[nudgeI];
   lastSig=null; lastOcrAt=0; haveGood=false; lastKey=""; goodOcrN="";
-  setStatus(running?"다시 인식 중…":"먼저 ▶ 실시간 검색 시작을 눌러주세요");
-};
+  if(running){ setStatus("다시 인식 중…(위치 살짝 이동)"); scanOnce(true); }
+  else setStatus("먼저 화면 공유를 시작해주세요");
+}
+document.getElementById("btnReOcr").onclick=reOcr;    // OCR 원문 아래 (자동·수동 공통)
+document.getElementById("btnReOcr2").onclick=reOcr;   // 인식 바 옆 (수동 전용)
 
 /* ===== 화면 공유 + 실시간 루프 ===== */
 let stream=null, running=false, worker=null, workerReady=false;
@@ -464,6 +494,30 @@ async function ensureWorker(){
   try{ await worker.setParameters({ tessedit_pageseg_mode:"3" }); }catch(e){}
   workerReady=true;
 }
+/* ===== 자동/수동 모드 ===== */
+let scanMode=(localStorage.getItem("scanMode")||"auto"), scanning=false, loopRunning=false;
+function showScanBar(){
+  const bar=document.getElementById("scanBar"), ms=document.getElementById("manualScan");
+  bar.classList.toggle("hide", !running);                 // 공유 중일 때만 바 표시
+  ms.classList.toggle("hide", scanMode==="auto" || !running); // 큰 인식버튼은 수동일 때만
+}
+function applyMode(){
+  const auto=scanMode==="auto";
+  document.getElementById("mAuto").classList.toggle("on",auto);
+  document.getElementById("mManual").classList.toggle("on",!auto);
+  document.getElementById("hintAuto").classList.toggle("hide",!auto);
+  document.getElementById("hintManual").classList.toggle("hide",auto);
+  if(!running) btnShare.textContent = auto ? "▶ 실시간 검색 시작" : "▶ 화면 공유 시작";
+  showScanBar();
+  if(running){
+    if(auto){ setStatus("실시간 인식 중…"); loop(); }
+    else setStatus("준비됨 — 문제 뜨면 🔍 인식(스페이스바) 누르기");
+  }
+}
+function setMode(m){ scanMode=m; try{localStorage.setItem("scanMode",m);}catch(e){} applyMode(); }
+document.getElementById("mAuto").onclick=()=>setMode("auto");
+document.getElementById("mManual").onclick=()=>setMode("manual");
+
 btnShare.onclick=async()=>{
   if(running){ stopAll(); return; }
   try{
@@ -472,74 +526,89 @@ btnShare.onclick=async()=>{
     stream.getVideoTracks()[0].onended=()=>stopAll();
     if(!document.body.classList.contains("pop")) document.getElementById("prevBody").classList.remove("collapsed");
     await ensureWorker();
-    running=true; haveGood=false; lastKey=""; lastSig=null; goodOcrN=""; lastOcrAt=0;
-    btnShare.textContent="■ 중지"; btnShare.className="stop";
-    setDot(true); setStatus("실시간 인식 중…");
-    loop();
+    running=true; haveGood=false; lastKey=""; lastSig=null; goodOcrN=""; lastOcrAt=0; ocrNudge=[0,0]; nudgeI=0;
+    btnShare.textContent="■ 중지"; btnShare.className="stop"; setDot(true);
+    showScanBar();
+    if(scanMode==="auto"){ setStatus("실시간 인식 중…"); loop(); }
+    else setStatus("준비됨 — 문제 뜨면 🔍 인식(스페이스바) 누르기");
   }catch(e){ setStatus("화면공유 취소/실패: "+e.message); }
 };
 function stopAll(){
   running=false; setDot(false); setStatus("중지됨");
-  btnShare.textContent="▶ 실시간 검색 시작"; btnShare.className="primary";
+  btnShare.textContent = scanMode==="auto" ? "▶ 실시간 검색 시작" : "▶ 화면 공유 시작"; btnShare.className="primary";
+  showScanBar();
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
-let TARGET_W=+(localStorage.getItem("ocrQuality")||1300);  // 속도/정확도 (버튼으로 조절, 저장)
-(function initQuality(){const q=document.getElementById("quality");q.value=String(TARGET_W);
-  q.onchange=()=>{TARGET_W=+q.value;try{localStorage.setItem("ocrQuality",q.value);}catch(e){}};})();
+const TARGET_W=900;   // 빠름 고정 (품질 선택 제거 — 속도 최우선)
 const DIFF_PX=22, DIFF_MIN=3;        // 샘플점이 22이상 바뀐 게 3개↑면 '화면 변함' (넓게 잡아도 글자변화 감지)
 let lastSig=null, lastOcrAt=0;
 function makeSig(d,w,h){const cols=44,rows=18,s=new Array(cols*rows);   // 촘촘히(792점) — 넓은 영역에서 작은 글자변화도 잡음
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=((c+0.5)/cols*w)|0,y=((r+0.5)/rows*h)|0;s[r*cols+c]=d[(y*w+x)*4];}return s;}
 function sigChanged(a,b){if(!a||!b)return true;let n=0;for(let i=0;i<a.length;i++)if(Math.abs(a[i]-b[i])>DIFF_PX)n++;return n>=DIFF_MIN;}
-async function loop(){
-  while(running){
-    if(video.videoWidth){
-      try{
-        const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-        const vw=video.videoWidth, vh=video.videoHeight;
-        const sx=Math.round(region.x*vw), sy=Math.round(region.y*vh);
-        const cw=Math.max(1,Math.round(region.w*vw)), ch=Math.max(1,Math.round(region.h*vh));
-        let sc=TARGET_W/cw; sc=sc<0.5?0.5:sc>2.5?2.5:sc;   // 작은 영역은 확대(최대 2.5배), 너무 크면 축소
-        cv.width=Math.round(cw*sc); cv.height=Math.round(ch*sc);
-        ctx.drawImage(video, sx,sy, cw,ch, 0,0, cv.width,cv.height);
-        const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
-        // 1) 그레이스케일
-        for(let i=0;i<d.length;i+=4){d[i]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];}
-        // 2) 반전 판단은 '가운데(문제 박스)' 밝기로 — 주변 어두운 게임 배경에 안 속게
-        let sum=0,cnt=0; const W=cv.width,H=cv.height;
-        for(let y=(H*0.15)|0;y<(H*0.85)|0;y++)for(let x=(W*0.30)|0;x<(W*0.70)|0;x++){sum+=d[(y*W+x)*4];cnt++;}
-        const inv=cnt>0 && (sum/cnt)<110;   // 박스 배경이 어두우면 반전
-        // 3) 대비 강화: 회색 글자를 진하게, 배경을 밝게
-        for(let i=0;i<d.length;i+=4){let v=inv?255-d[i]:d[i];v=(v-160)*2.2+128;v=v<0?0:v>255?255:v;d[i]=d[i+1]=d[i+2]=v;}
-        const sig=makeSig(d,cv.width,cv.height);
-        const nowT=performance.now();
-        // 화면 바뀌면 OCR. 안 바뀐 것 같아도 1.3초마다는 강제로 한 번(감지 놓침 대비)
-        if(!sigChanged(sig,lastSig) && (nowT-lastOcrAt)<1300){ await new Promise(r=>setTimeout(r,120)); continue; }
-        lastSig=sig; lastOcrAt=nowT;
-        ctx.putImageData(img,0,0);
-        // 0) 독음(한자) 모양매칭 먼저 시도 — 확신 높으면 독음 띄우고 한글 OCR 건너뜀
-        let handled=false;
-        if(DKREADY){
-          const gray=new Float32Array(W*H);
-          for(let i=0;i<W*H;i++) gray[i]=d[i*4];
-          const dk=dkMatchGray(gray,W,H);
-          if(dk && dk.score>=DK_TH && dk.margin>=DK_MARGIN){ showDokeum(dk); handled=true; }
-        }
-        if(!handled){
-          const t0=performance.now();
-          const {data}=await worker.recognize(cv);
-          const ms=Math.round(performance.now()-t0);
-          const text=(data.text||"").replace(/\s+/g," ").trim();
-          const qtext=extractQuestion(text);
-          document.getElementById("ocrText").value=text;
-          document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms · 문제: ${qtext.slice(0,38)}`;
-          ocrSearch(qtext);
-        }
-      }catch(e){}
+/* 한 번 인식 (자동 루프·수동 버튼 공용). force=true면 변화감지 무시하고 무조건 읽음 */
+async function scanOnce(force){
+  if(scanning || !video.videoWidth) return;
+  scanning=true;
+  try{
+    const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+    const vw=video.videoWidth, vh=video.videoHeight;
+    const cw=Math.max(1,Math.round(region.w*vw)), ch=Math.max(1,Math.round(region.h*vh));
+    // 재인식 누를 때마다 캡처를 조금씩 옮겨서(아바타 가림 등) 새로 읽게
+    let sx=Math.round(region.x*vw)+ocrNudge[0], sy=Math.round(region.y*vh)+ocrNudge[1];
+    sx=Math.max(0,Math.min(sx,vw-cw)); sy=Math.max(0,Math.min(sy,vh-ch));
+    let sc=TARGET_W/cw; sc=sc<0.5?0.5:sc>2.5?2.5:sc;
+    cv.width=Math.round(cw*sc); cv.height=Math.round(ch*sc);
+    ctx.drawImage(video, sx,sy, cw,ch, 0,0, cv.width,cv.height);
+    const img=ctx.getImageData(0,0,cv.width,cv.height),d=img.data;
+    for(let i=0;i<d.length;i+=4){d[i]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];}   // 그레이스케일
+    let sum=0,cnt=0; const W=cv.width,H=cv.height;
+    for(let y=(H*0.15)|0;y<(H*0.85)|0;y++)for(let x=(W*0.30)|0;x<(W*0.70)|0;x++){sum+=d[(y*W+x)*4];cnt++;}
+    const inv=cnt>0 && (sum/cnt)<110;   // 가운데(박스) 어두우면 반전
+    for(let i=0;i<d.length;i+=4){let v=inv?255-d[i]:d[i];v=(v-160)*2.2+128;v=v<0?0:v>255?255:v;d[i]=d[i+1]=d[i+2]=v;}
+    const sig=makeSig(d,cv.width,cv.height); const nowT=performance.now();
+    // 수동(force)이면 무조건. 자동이면 화면 바뀜 or 1.3초 경과 시에만
+    if(!force && !sigChanged(sig,lastSig) && (nowT-lastOcrAt)<1300){ return; }
+    lastSig=sig; lastOcrAt=nowT;
+    ctx.putImageData(img,0,0);
+    let handled=false;
+    if(DKREADY){   // 독음(한자) 모양매칭 먼저
+      const gray=new Float32Array(W*H);
+      for(let i=0;i<W*H;i++) gray[i]=d[i*4];
+      const dk=dkMatchGray(gray,W,H);
+      if(dk && dk.score>=DK_TH && dk.margin>=DK_MARGIN){ showDokeum(dk); handled=true; }
     }
-    await new Promise(r=>setTimeout(r,100));
-  }
+    if(!handled){
+      const t0=performance.now();
+      const {data}=await worker.recognize(cv);
+      const ms=Math.round(performance.now()-t0);
+      const text=(data.text||"").replace(/\s+/g," ").trim();
+      const qtext=extractQuestion(text);
+      document.getElementById("ocrText").value=text;
+      document.getElementById("ocrInfo").textContent=`OCR 신뢰도 ${Math.round(data.confidence)}% · ${ms}ms · 문제: ${qtext.slice(0,38)}`;
+      ocrSearch(qtext);
+    }
+  }catch(e){}
+  finally{ scanning=false; }
 }
+async function loop(){   // 자동 모드 전용 — 계속 돌면서 scanOnce
+  if(loopRunning) return; loopRunning=true;
+  while(running && scanMode==="auto"){ await scanOnce(false); await new Promise(r=>setTimeout(r,100)); }
+  loopRunning=false;
+}
+/* 수동 인식: 큰 버튼 + 스페이스바 */
+document.getElementById("manualScan").onclick=()=>{
+  if(!running){ setStatus("먼저 ▶ 화면 공유 시작을 눌러주세요"); return; }
+  setStatus("인식 중…");
+  scanOnce(true).then(()=>{ if(running&&scanMode==="manual") setStatus("준비됨 — 다음 문제 뜨면 다시 누르기(스페이스바)"); });
+};
+window.addEventListener("keydown",e=>{
+  if(e.code==="Space" && scanMode==="manual" && running){
+    const tag=((e.target&&e.target.tagName)||"").toLowerCase();
+    if(tag==="input"||tag==="textarea") return;   // 입력칸에선 무시
+    e.preventDefault(); scanOnce(true);
+  }
+});
+applyMode();   // 초기 모드 UI 반영
 function setStatus(s){document.getElementById("status").textContent=s;}
 function setDot(on){document.getElementById("dot").className="dot"+(on?" on":"");}
 
