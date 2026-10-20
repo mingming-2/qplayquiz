@@ -486,8 +486,8 @@ async function initPaddle(){
   try{
     setStatus("정확도 모델 로딩 중… (처음 한 번, 네트워크)");
     step="onnx런타임 설정";
-    const ort=await import("https://esm.run/onnxruntime-web@1.17.3");
-    ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
+    const ort=await import("https://esm.run/onnxruntime-web@1.23.2");
+    ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/";
     ort.env.wasm.numThreads=1;   // GH Pages엔 COOP/COEP 헤더 없음 → 단일스레드 wasm만 가능
     step="라이브러리 로드";
     const mod=await import("https://esm.run/@gutenye/ocr-browser");
