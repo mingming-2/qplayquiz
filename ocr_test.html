@@ -593,7 +593,7 @@ async function scanOnce(force){
       let text="", conf=0;
       if(paddleReady){
         try{ const r=await paddleRecognize(cv); text=r.text; conf=r.conf; }
-        catch(e){ paddleReady=false; engineName="Tesseract"; }   // 인식 중 실패 → 폴백
+        catch(e){ paddleReady=false; engineName="Tesseract"; paddleErr="인식 실패: "+((e&&e.message)||e); console.warn("PPOCR recognize",e); }   // 인식 중 실패 → 폴백
       }
       if(!paddleReady){ const {data}=await worker.recognize(cv); text=data.text||""; conf=Math.round(data.confidence||0); }
       const ms=Math.round(performance.now()-t0);
