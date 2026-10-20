@@ -474,11 +474,12 @@ async function ensureWorker(){
    @gutenye/ocr-browser(가벼움·OpenCV 없음) + onnxruntime-web.
    GitHub Pages는 멀티스레드 wasm용 헤더가 없어서 numThreads=1로 단일스레드 강제. */
 let paddleOcr=null, paddleReady=false, paddleTried=false, engineName="Tesseract", paddleErr="";
-const PP_BASE="https://cdn.jsdelivr.net/gh/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models@main/";
+/* jsdelivr는 LFS를 안 풀어주므로(포인터만 줌) onnx는 GitHub LFS 미디어 주소로, 사전은 raw로 */
+const GH="PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models/main/";
 const PADDLE_MODELS={
-  detection:   PP_BASE+"detection/PP-OCRv5_mobile_det_infer.onnx",
-  recognition: PP_BASE+"recognition/multi/korean/v5/korean_PP-OCRv5_mobile_rec_infer.onnx",
-  dictionary:  PP_BASE+"recognition/multi/korean/v5/ppocrv5_korean_dict.txt"
+  detection:   "https://media.githubusercontent.com/media/"+GH+"detection/PP-OCRv5_mobile_det_infer.onnx",
+  recognition: "https://media.githubusercontent.com/media/"+GH+"recognition/multi/korean/v5/korean_PP-OCRv5_mobile_rec_infer.onnx",
+  dictionary:  "https://raw.githubusercontent.com/"+GH+"recognition/multi/korean/v5/ppocrv5_korean_dict.txt"
 };
 async function initPaddle(){
   if(paddleTried) return; paddleTried=true;
