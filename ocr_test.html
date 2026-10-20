@@ -480,11 +480,14 @@ let paddleOcr=null, paddleReady=false, paddleTried=false, engineName="Tesseract"
 const PADDLE_MODELS={
   detectionPath:"models/ch_PP-OCRv4_det_infer.onnx",
   recognitionPath:"models/korean_PP-OCRv4_rec_infer.onnx",
-  dictionaryPath:"models/korean_dict.txt"
+  dictionaryPath:"https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/main/ppocr/utils/dict/korean_dict.txt"  // 한글 사전 자동 로드(업로드 불필요)
 };
 async function initPaddle(){
   if(paddleTried) return; paddleTried=true;
   try{
+    // 모델 파일이 저장소에 없으면 Paddle 시도 안 함 → 바로 Tesseract(지연 없음)
+    const probe=await fetch(PADDLE_MODELS.detectionPath,{method:"HEAD"});
+    if(!probe.ok) return;
     setStatus("정확도 모델(PP-OCRv4) 로딩 중… (처음 한 번)");
     const mod=await import("https://esm.run/@gutenye/ocr-browser");
     const Ocr=mod.default||mod.Ocr||mod;
