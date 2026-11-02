@@ -37,8 +37,8 @@
   <div class="dk-search"><input id="q" placeholder="독음이나 한자로 찾기… (ESC로 지움)" autocomplete="off"></div>
   <div class="dk-body" id="body"><div class="dk-empty">불러오는 중…</div></div>
   <div id="toast"></div>
-<script>
-const DATA_KEY="qplay!2026#kkong";
+<script>(()=>{"use strict";
+const DATA_KEY=[42,24,25,227,246,189,155,134,241,230,254,129,156,107,127,121].map((c,i)=>String.fromCharCode(c^((91+i*13)%256))).join("");
 const GAME=new URLSearchParams(location.search).get("game")||"꽁꽁";
 let dkType="전체", DOKEUM=null;
 const norm=s=>(s||"").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,"");
@@ -85,6 +85,7 @@ document.getElementById("body").addEventListener("click",e=>{const c=e.target.cl
 document.getElementById("title").textContent=GAME+" 빠른 독음 찾기";
 (async()=>{ try{ await load(); buildTabs(); render(); }
   catch(e){ document.getElementById("body").innerHTML='<div class="dk-empty">독음을 불러오지 못했어요. (qplayquiz 저장소에 올려야 d7k2m9x.txt를 읽어요)</div>'; } })();
-</script>
+
+})();</script>
 </body>
 </html>
